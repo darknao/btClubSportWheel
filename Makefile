@@ -6,8 +6,10 @@ TARGETPATH = firmware
 # configurable options
 OPTIONS = -DF_CPU=24000000 -DLAYOUT_US_ENGLISH -DUSB_RAWHID
 
-# options needed by many Arduino libraries to configure for Teensy 3.0
-OPTIONS += -D__MK20DX256__ -DARDUINO=106 -DTEENSYDUINO=120 
+# options needed by many Arduino libraries to configure for Teensy 3.1
+OPTIONS += -D__MK20DX256__ -DARDUINO=166 -DTEENSYDUINO=126 
+# Teensy LC
+# OPTIONS += -D__MKL26Z64__ -DTEENSYDUINO=126
 
 # Other Makefiles and project templates for Teensy 3.x:
 #
@@ -32,7 +34,9 @@ COMPILERPATH = /usr/bin
 #************************************************************************
 
 # CPPFLAGS = compiler options for C and C++
-CPPFLAGS = -Wall -g -Os -mcpu=cortex-m4 -mthumb -nostdlib -MMD $(OPTIONS) -I. -I$(COREPATH) 
+CPPFLAGS = -Wall -ffunction-sections -fdata-sections -g -Os -mcpu=cortex-m4 -mthumb -nostdlib -MMD $(OPTIONS) -I. -I$(COREPATH) 
+# Teensy LC
+#CPPFLAGS = -Wall -ffunction-sections -fdata-sections -g -Os -mcpu=cortex-m0plus -mthumb -nostdlib -MMD $(OPTIONS) -I. -I$(COREPATH) 
 
 # compiler options for C++ only
 CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
@@ -41,11 +45,12 @@ CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
 CFLAGS =
 
 # linker options
-LDFLAGS = -Os -Wl,--gc-sections -mcpu=cortex-m4 -mthumb -Tmk20dx256.ld
+LDFLAGS = -Os -Wl,--gc-sections,--relax -mcpu=cortex-m4 -mthumb -T$(COREPATH)/mk20dx256.ld
+# Teensy LC
+# LDFLAGS = -Os -Wl,--gc-sections,--relax -mcpu=cortex-m0plus -mthumb -Tmkl26z64.ld
 
 # additional libraries to link
 LIBS = -lm
-
 
 # names for the compiler programs
 CC = $(COMPILERPATH)/arm-none-eabi-gcc
@@ -65,7 +70,7 @@ OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(TC_FILES:.c=.o) $(TCPP_FILES:.cp
 
 all: $(TARGET).hex
 
-$(TARGET).elf: $(OBJS) mk20dx256.ld
+$(TARGET).elf: $(OBJS) lib/mk20dx256.ld
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 %.hex: %.elf
