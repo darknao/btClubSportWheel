@@ -31,6 +31,9 @@
 #ifndef USBjoystick_h_
 #define USBjoystick_h_
 
+#include "usb_desc.h"
+
+#if defined(JOYSTICK_INTERFACE)
 
 #include <inttypes.h>
 
@@ -106,6 +109,8 @@ class usb_joystick_class
 extern usb_joystick_class Joystick;
 
 #endif // __cplusplus
+
+#endif // JOYSTICK_INTERFACE
 
 #endif // USBjoystick_h_
 

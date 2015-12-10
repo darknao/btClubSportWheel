@@ -1,5 +1,3 @@
-#ifndef csw_h
-#define csw_h
 /*
  * Copyright (C) 2015 darknao
  * https://github.com/darknao/btClubSportWheel
@@ -19,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef csw_h
+#define csw_h
 
 
 #include "fanatec.h"

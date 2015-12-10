@@ -98,6 +98,7 @@ void transfer_data(csw_out_t* out, csw_in_t* in, uint8_t length) {
 
 }
 
+/*
 void transfer_data2(const uint8_t* out, uint8_t* in, uint8_t length) {
   uint8_t data[length]; // 32 bytes of data, 1 byte for CRC
   uint8_t crc;
@@ -128,3 +129,4 @@ void transfer_data2(const uint8_t* out, uint8_t* in, uint8_t length) {
   in[i++] = SPIFIFO.read();
   in[i++] = SPIFIFO.read();
 }
+*/

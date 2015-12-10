@@ -29,7 +29,7 @@
  */
 
 #include "core_pins.h"
-// #include "HardwareSerial.h"
+#include "HardwareSerial.h"
 // #include "usb_serial.h"
 // #include "usb_seremu.h"
 
@@ -39,10 +39,10 @@ void yield(void)
 	static uint8_t running=0;
 
 	if (running) return; // TODO: does this need to be atomic?
-	// running = 1;
+	running = 1;
 	// if (Serial.available()) serialEvent();
-	// if (Serial1.available()) serialEvent1();
+	if (Serial1.available()) serialEvent1();
 	// if (Serial2.available()) serialEvent2();
 	// if (Serial3.available()) serialEvent3();
-	// running = 0;
+	running = 0;
 };

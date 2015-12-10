@@ -13,7 +13,7 @@
 
 #include "avr_functions.h"
 #include "wiring.h"
-
+#include "HardwareSerial.h"
 
 #define DMAMEM __attribute__ ((section(".dmabuffers"), used))
 #define FASTRUN __attribute__ ((section(".fastrun"), noinline, noclone ))
@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 
 #include "avr_emulation.h"
-// #include "usb_serial.h"
+#include "usb_serial.h"
 // #include "usb_seremu.h"
 // #include "usb_keyboard.h"
 // #include "usb_mouse.h"

@@ -1,5 +1,3 @@
-#ifndef fanatec_h
-#define fanatec_h
 /*
  * Copyright (C) 2015 darknao
  * https://github.com/darknao/btClubSportWheel
@@ -19,12 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef fanatec_h
+#define fanatec_h
 
 
 #include <stdint.h>
 #include <avr/pgmspace.h>
 #include <SPI.h>
-#include <SPIFIFO.h>
+//#include <SPIFIFO.h>
 
 #define CS 10
 #define FRXSIZE 34
@@ -83,7 +83,7 @@ struct csw_out_t {
 };
 #pragma pack(pop)
 void transfer_data(csw_out_t* out, csw_in_t* in, uint8_t length);
-void transfer_data2(const uint8_t* out, uint8_t* in, uint8_t length);
+//void transfer_data2(const uint8_t* out, uint8_t* in, uint8_t length);
 
 uint8_t crc8(const uint8_t* buf, uint8_t length);
 

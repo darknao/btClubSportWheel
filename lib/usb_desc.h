@@ -41,6 +41,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifndef USB_DISABLED
+
 #define ENDPOINT_UNUSED     0x00
 #define ENDPOINT_TRANSIMIT_ONLY   0x15
 #define ENDPOINT_RECEIVE_ONLY   0x19
@@ -139,6 +141,9 @@ typedef struct {
 } usb_descriptor_list_t;
 
 extern const usb_descriptor_list_t usb_descriptor_list[];
+
+#endif // USB_DISABLED
+
 
 #endif // F_CPU >= 20 MHz
 

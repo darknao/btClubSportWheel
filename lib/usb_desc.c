@@ -32,6 +32,7 @@
 
 #define USB_DESC_LIST_DEFINE
 #include "usb_desc.h"
+#ifdef NUM_ENDPOINTS
 #include "usb_names.h"
 #include "kinetis.h"
 #include "avr_functions.h"
@@ -145,6 +146,7 @@ static uint8_t joystick_report_desc[] = {
 
 
     // 4 LEDs
+    
     0x05, 0x0a,                    //   USAGE_PAGE (Ordinals)
     0x09, 0x01,                    //   USAGE (Instance 1)
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
@@ -186,6 +188,23 @@ static uint8_t joystick_report_desc[] = {
     0x91, 0x01,                    // OUTPUT (Cnst,Ary,Abs)
       //  no padding ( 64 )
     0xc0                           // END_COLLECTION
+    
+    /*
+    0x05, 0x0a,                    //   USAGE_PAGE (Ordinals)
+    0x09, 0x01,                    //   USAGE (Instance 1)
+    0xa1, 0x01,                    //   COLLECTION (Application)
+    //0x85, 0x01,                      // REPORT_ID (1) 
+    0x05, 0x08,                    //     USAGE_PAGE (LEDs)
+    0x09, 0x4b,                    //     USAGE (Generic Indicator)
+    0x75, 0x01,                    //     REPORT_SIZE (8)
+    0x95, 0x07,                    //     REPORT_COUNT (7)
+    0x91, 0x02,                    //     OUTPUT (Data,Var,Abs)
+    0xc0,                          //   END_COLLECTION
+
+    0x91, 0x02,                    // OUTPUT (Cnst,Ary,Abs)
+      //  no padding ( 64 )
+    0xc0                           // END_COLLECTION
+    */
 };
 
 
@@ -453,4 +472,5 @@ const uint8_t usb_endpoint_config_table[NUM_ENDPOINTS] =
 };
 
 
+#endif // NUM_ENDPOINTS
 #endif // F_CPU >= 20 MHz

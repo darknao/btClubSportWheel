@@ -30,6 +30,7 @@
 
 #include "core_pins.h"
 #include "pins_arduino.h"
+#include "HardwareSerial.h"
 
 
 #if defined(KINETISK)
