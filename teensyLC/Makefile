@@ -4,12 +4,9 @@ TARGET = btCSW_teensyLC
 TARGETPATH = ../firmware
 
 # configurable options
-OPTIONS = -DF_CPU=24000000 -DLAYOUT_US_ENGLISH 
-#-DUSB_DISABLED
+OPTIONS = -DF_CPU=24000000 -DLAYOUT_US_ENGLISH -DUSB_DISABLED
 
 # options needed by many Arduino libraries to configure for Teensy 3.1
-# OPTIONS += -D__MK20DX256__ -DARDUINO=166 -DTEENSYDUINO=126 
-# Teensy LC
 OPTIONS += -D__MKL26Z64__ -DARDUINO=166 -DTEENSYDUINO=126
 
 # Other Makefiles and project templates for Teensy 3.x:
@@ -35,8 +32,6 @@ COMPILERPATH = /usr/bin
 #************************************************************************
 
 # CPPFLAGS = compiler options for C and C++
-#CPPFLAGS = -Wall -ffunction-sections -fdata-sections -g -Os -mcpu=cortex-m4 -mthumb -nostdlib -MMD $(OPTIONS) -I. -I$(COREPATH) 
-# Teensy LC
 CPPFLAGS = -Wall -ffunction-sections -fdata-sections -g -Os -mcpu=cortex-m0plus -mthumb -nostdlib -MMD $(OPTIONS) -I. -I$(COREPATH) 
 
 # compiler options for C++ only
@@ -46,8 +41,6 @@ CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
 CFLAGS =
 
 # linker options
-#LDFLAGS = -Os -Wl,--gc-sections,--relax -mcpu=cortex-m4 -mthumb -T$(COREPATH)/mk20dx256.ld
-# Teensy LC
 LDFLAGS = -Os -Wl,--gc-sections,--relax -mcpu=cortex-m0plus -mthumb -T$(COREPATH)/mkl26z64.ld
 
 # additional libraries to link
