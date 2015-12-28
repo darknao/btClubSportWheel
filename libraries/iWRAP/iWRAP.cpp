@@ -242,7 +242,7 @@ uint8_t iwrap_parse(uint8_t b, uint8_t mode) {
                             iwrap_debug_hex(iwrap_tptr[i]);
                         }
                     }
-                    iwrap_debug("\n");
+                    iwrap_debug("\r\n");
                 }
             #endif /* IWRAP_DEBUG */
             
