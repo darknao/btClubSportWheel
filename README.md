@@ -14,16 +14,29 @@ The Teensy-LC is a good choice for this project as it has a small size & price.
 ### Shopping List
 #### USB version
 - Fanatec CSW rim (obviously)
-- [Teensy LC](https://www.pjrc.com/teensy/teensyLC.html) : ~12$
+- [Teensy LC](https://www.pjrc.com/teensy/teensyLC.html) : **~12$**
 
 #### Bluetooth upgrade
-- [Bluegiga WT12 module](http://www.jetney.com/wt12) : ~25$
-- [Adafruit PowerBoost 500 Charger](https://www.adafruit.com/products/1944) : ~15$
-- [LiPo Battery (>=1000mA)](https://www.adafruit.com/categories/138) : ~10$
+- [Bluegiga WT12 module](http://www.jetney.com/wt12) : **~25$**
+- [Adafruit PowerBoost 500 Charger](https://www.adafruit.com/products/1944) : **~15$**
+- [LiPo Battery (>=1000mA)](https://www.adafruit.com/categories/138) : **~10$**
 
-Total price for full BT conversion : ~60$
-### Pinout schematics
-TBD
+Total price for full BT conversion : **~60$**
+### Pinout & schematics
+#### Fanatec Plug
+![Fanatec Round Plug](http://i.imgur.com/yLSG0Jsm.jpg)
+
+1. MISO 
+2. MOSI 
+3. GND 
+4. 5v 
+5. GND 
+6. SCK 
+7. 3v3 
+8. CS 
+
+#### Teensy pinout
+![Teensy pinout](http://i.imgur.com/5yfoka2.png)
 
 ## Compatible CSW Wheel
 Formula, BMW M3 GT2 and Porsche 918 rims are confirmed working with this conversion.  
@@ -43,9 +56,10 @@ It's is fully compatible with Fanaleds, which is required to get all feedback in
 - Rumble motors [Fanaleds]
 
 ## Precompiled firmware
-Teensy 3.1 & 3.2 : [`USB`](firmware/teensy31_USB.hex) | `Bluetooth` (not ready yet)  
-Teensy LC : [`USB`](firmware/teensyLC_USB.hex) | `Bluetooth` (not ready yet)
+You'll need the [Teensy Loader](https://www.pjrc.com/teensy/loader.html) to flash these firmwares.
 
+**Teensy 3.1 & 3.2** : [`USB`](firmware/teensy31_USB.hex) | `Bluetooth` (not ready yet)  
+**Teensy LC** : [`USB`](firmware/teensyLC_USB.hex) | `Bluetooth` (not ready yet)
 
 ## Building Instruction
 This code is based on Teensyduino framework and all required library is included in this repo. 
