@@ -115,7 +115,7 @@ static uint8_t joystick_report_desc[] = {
     0x09, 0x04,                    // USAGE (Joystick)
     0xa1, 0x01,                    // COLLECTION (Application)
 
-        // 18 Buttons (24bits)
+        // 18 Buttons (18bits)
         0x05, 0x09,                    //   USAGE_PAGE (Button)
             0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
             0x29, 0x12,                    //   USAGE_MAXIMUM (Button 18)
@@ -124,7 +124,7 @@ static uint8_t joystick_report_desc[] = {
             0x75, 0x01,                    //   REPORT_SIZE (1)
             0x95, 0x12,                    //   REPORT_COUNT (18)
             0x81, 0x02,                    //   INPUT (Data,Var,Abs)
-              //   padding ( 18 + 6 )
+              //   padding ( 18 + 6 -> 24)
             0x95, 0x01,                    //   REPORT_COUNT (1)
             0x75, 0x06,                    //   REPORT_SIZE (6)
             0x81, 0x01,                    //   INPUT (Cnst,Ary,Abs)
@@ -140,7 +140,7 @@ static uint8_t joystick_report_desc[] = {
             0x81, 0x02,                    //   INPUT (Data,Var,Abs)
               //   no padding ( 16 )
 
-        // Hat switch 
+        // Hat switch (4bits)
         0x05, 0x01,                    //   USAGE_PAGE (Generic Desktop)
             0x09, 0x39,                    //   USAGE (Hat)
             0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
@@ -151,11 +151,12 @@ static uint8_t joystick_report_desc[] = {
             0x75, 0x04,                    //   REPORT_SIZE (4)
             0x95, 0x01,                    //   REPORT_COUNT (1)
             0x81, 0x42,                    //   INPUT (Data,Var,Abs)
-              //   padding ( 4 + 4 )
+              //   padding ( 4 + 4 -> 8)
             0x95, 0x35,                    //   REPORT_COUNT (1)
             0x75, 0x04,                    //   REPORT_SIZE (4)
             0x81, 0x01,                    //   INPUT (Cnst,Ary,Abs)
 
+        // Total size : 48bits -> 6bytes
 
     // 4 LEDs
     

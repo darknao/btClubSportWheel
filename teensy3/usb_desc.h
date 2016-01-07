@@ -94,18 +94,27 @@ let me know?  http://forum.pjrc.com/forums/4-Suggestions-amp-Bug-Reports
 
 
 /* USB version */
-#ifdef HAS_WHEEL
+#ifdef IS_USB
   #define JOYSTICK_INTERFACE    0
   #define JOYSTICK_ENDPOINT     1
   #define JOYSTICK_SIZE         32
   #define JOYSTICK_INTERVAL     2
   #define LIGHTS_ENDPOINT       1
   #define LIGHTS_SIZE           7
-  #define LIGHTS_INTERVAL       2
+  #define LIGHTS_INTERVAL       16
   #define JOYSTICK_NAME         {'C', 'l', 'u', 'b', 'S', 'p', 'o', 'r', 't', ' ', 'W', 'h', 'e' ,'e', 'l'}
   #define JOYSTICK_NAME_LEN     15
   #define JOYSTICK_NUM_EP       2
   #define JOYSTICK_NUM_INT      1
+
+  #define SEREMU_INTERFACE      1 // Serial emulation
+  #define SEREMU_TX_ENDPOINT    2
+  #define SEREMU_TX_SIZE        64
+  #define SEREMU_TX_INTERVAL    1
+  #define SEREMU_RX_ENDPOINT    3
+  #define SEREMU_RX_SIZE        32
+  #define SEREMU_RX_INTERVAL    2
+
 #else
   #define JOYSTICK_NUM_EP       0
   #define JOYSTICK_NUM_INT      0
