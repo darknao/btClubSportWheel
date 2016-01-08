@@ -29,3 +29,13 @@
 
 # Vim temp files
 *~
+*.swp
+
+# Backup files
+*.bak
+
+\@eaDir/
+Thumbs.db
+build/
+
+*.elf
