@@ -40,9 +40,11 @@ void yield(void)
 
 	if (running) return; // TODO: does this need to be atomic?
 	running = 1;
+	#if (defined(CDC_STATUS_INTERFACE) && defined(CDC_DATA_INTERFACE)) || defined(SEREMU_INTERFACE)
 	if (Serial.available()) serialEvent();
 	if (Serial1.available()) serialEvent1();
 	if (Serial2.available()) serialEvent2();
 	if (Serial3.available()) serialEvent3();
+	#endif
 	running = 0;
 };

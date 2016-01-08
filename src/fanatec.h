@@ -23,6 +23,11 @@
 #include <SPI.h>
 #define CS 10
 
+#define FORMULA_RIM 1
+#define BMW_RIM 2
+#define RSR_RIM 3
+#define UNIHUB 4
+
 #pragma pack(push, 1)
 struct csw_in_t {
   union {
@@ -34,8 +39,10 @@ struct csw_in_t {
       int8_t axisX;
       int8_t axisY;
       int8_t encoder;
-      
-      uint8_t garbage[24];
+      uint8_t btnHub[2];
+      uint8_t btnPS[2];
+
+      uint8_t garbage[20];
       uint8_t crc;
       // +3 padding bits
     };

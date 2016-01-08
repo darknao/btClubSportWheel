@@ -61,8 +61,14 @@ class usb_joystick_class
         void begin(void) { }
         void end(void) { }
         void button(uint8_t button, bool val) {
-            if (--button >= 18) return;
-            if (button >= 16) {
+            if (--button >= 37) return;
+            if (button >= 32) {
+                if (val) usb_joystick_data[4] |= (0x1 << (button-32));
+                else usb_joystick_data[4] &= ~(0x1 << (button-32));     
+            } else if (button >= 24) {
+                if (val) usb_joystick_data[3] |= (0x1 << (button-24));
+                else usb_joystick_data[3] &= ~(0x1 << (button-24));     
+            } else if (button >= 16) {
                 if (val) usb_joystick_data[2] |= (0x1 << (button-16));
                 else usb_joystick_data[2] &= ~(0x1 << (button-16));     
             } else if (button >= 8) {
@@ -76,17 +82,17 @@ class usb_joystick_class
         }
 
         void X(unsigned int val) {
-            usb_joystick_data[3] = val & 0xFF;
+            usb_joystick_data[5] = val & 0xFF;
             if (!manual_mode) usb_joystick_send();
         }
 
         void Y(unsigned int val) {
-            usb_joystick_data[4] = val & 0xFF;
+            usb_joystick_data[6] = val & 0xFF;
             if (!manual_mode) usb_joystick_send();
         }
         
         inline void hat(int val) {
-            usb_joystick_data[5] = val & 0xFF;
+            usb_joystick_data[7] = val & 0xFF;
             if (!manual_mode) usb_joystick_send();
         }
 

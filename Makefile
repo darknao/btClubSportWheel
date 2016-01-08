@@ -4,7 +4,7 @@ TARGETPATH = firmware
 TEENSY = LC
 
 # Device type: USB (wired) or BT (bluetooth)
-TYPE = BT_DEBUG
+TYPE = USB
 
 # Set to 24000000, 48000000, or 96000000 to set CPU core speed
 TEENSY_CORE_SPEED = 24000000
@@ -21,10 +21,13 @@ BUILDDIR = $(abspath $(CURDIR)/build)
 
 
 ifeq ($(TYPE), USB)
-	OPTIONS += -DHAS_WHEEL
+	OPTIONS += -DIS_USB
 else
 	ifeq ($(TYPE), BT_DEBUG)
 		OPTIONS += -DHAS_DEBUG
+	endif
+	ifeq ($(TYPE), BT)
+		OPTIONS += -DUSB_DISABLED
 	endif
 endif
 

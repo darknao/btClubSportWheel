@@ -34,9 +34,10 @@ uint8_t iwrap_mode = IWRAP_MODE_MUX;
 
 uint8_t hid_data[35];
 int16_t bt_delay = 0;
-uint16_t max_delay = 400; //40; // overhead if below 30
+uint32_t max_delay = 150000; //40; // overhead if below 30 (120ms)
+// 400 is too short with fanaleds
 
-bool in_changed; // useless for now
+bool in_changed;
 bool bt_retry; // useless too
 
 int iwrap_out(int len, unsigned char *data);
@@ -50,7 +51,7 @@ void my_iwrap_evt_no_carrier(uint8_t link_id, uint16_t error_code, const char *m
 void bt_button(uint8_t button, bool val);
 void bt_X(unsigned int val);
 void bt_Y(unsigned int val);
-inline void bt_hat(int val);
+void bt_hat(int val);
 void bt_setWheel(unsigned int val);
 /* END WT12 */
 
@@ -62,11 +63,17 @@ void idle();
 csw_in_t wheel_in;
 csw_out_t wheel_out;
 bool bt_connected;
+bool got_hid;
+uint32_t timing;
+uint32_t timing_bt;
+
+uint8_t hid_pck[7];
 
 void setup() {
   fsetup();
 
   /* WT12 */
+  #ifndef IS_USB
   pinMode (CTS, INPUT);
   WT12.begin(115200, SERIAL_8N1);
   WT12.attachRts(19);
@@ -77,7 +84,6 @@ void setup() {
   iwrap_evt_ring = my_iwrap_evt_ring;
   iwrap_evt_hid_suspend = my_iwrap_evt_hid_suspend;
   iwrap_rsp_list_result = my_iwrap_rsp_list_result;
-  iwrap_debug = my_iwrap_debug;
   iwrap_evt_no_carrier = my_iwrap_evt_no_carrier;
 
   // prebuild HID packet
@@ -85,29 +91,38 @@ void setup() {
   hid_data[1] = 0x21;
   hid_data[2] = 0xa1;
 
-  in_changed = false; // useless
+  in_changed = false;
   bt_retry = false; // useless
 
-
-  //Joystick.useManualSend(true);
-
+  #else
+  Joystick.useManualSend(true);
+  #endif // IS_USB
   
   // prebuild output packet
   memset(wheel_out.raw, 0, sizeof(csw_out_t));
   wheel_out.header = 0xa5;
-  wheel_out.id = 0x03;
+  wheel_out.id = 0x00;
   //wheel_out.leds = 0xffff;
-
+  got_hid = false;
   
-  bt_connected = false;
   // debug
+  #ifdef HAS_DEBUG
+  //iwrap_debug = my_iwrap_debug;
   Serial.begin(115200);
   Serial.println("MCU Ready");  
   delay(5000);
   Serial.println("check for active connection...");
+  #endif
 
+  #ifndef IS_USB
+  bt_connected = false;
   iwrap_send_command("LIST", iwrap_mode);
+  #else
+    bt_connected = true;
+  #endif
   //iwrap_send_command("SET BT PAIR", iwrap_mode);
+  timing = micros();
+  timing_bt = millis();
 }
 
 
@@ -117,29 +132,19 @@ uint8_t main_link_id = 1;
 
 void loop() {
   
+    
+
   if(bt_connected) {
     // Read Fanatec Packet
-    //SPI.beginTransaction(settingsA);
-    //transfer_data2(ftx_pck, frx_pck, sizeof(ftx_pck));
     transfer_data(&wheel_out, &wheel_in, sizeof(wheel_out.raw));
-    /*
-    digitalWrite(chipselect,LOW); 
-    for (i = 0; i < frx_size; i++) {
-      frx_pck[i] = SPI.transfer(0);
-    }
-    digitalWrite(chipselect,HIGH); 
-    //SPI.endTransaction();
-  */
-  /*
-    busy = (frx_pck[0] >> 7) & 0x01;
-    // Bit shifting
-    for (i = 0;  i < frx_size - 1;  ++i) {
-       frx_pck[i] = (frx_pck[i] << 1) | ((frx_pck[i+1] >> 7) & 1);
-    } 
-    
-    // nulling last byte (this is completly useless, but make reading easize)
-    frx_pck[frx_size-1] = 0;
-    */
+    #ifdef IS_USB
+      // Fetching HID packet
+      uint16_t hid_size;
+      hid_size = Joystick.recv(&hid_pck, 0);
+      if(hid_size > 0) hid_output(1, hid_size, hid_pck);
+    #endif
+
+
     if(wheel_in.header == 0xa5){
       bt_setWheel(wheel_in.id);
       // Left stick
@@ -164,19 +169,51 @@ void loop() {
       // paddles shitfer 
       bt_button(15, wheel_in.buttons[1]&0x08);
       bt_button(16, wheel_in.buttons[1]&0x01);
-  /*
-      if( rotary_debounce > 0 && rotary_debounce <= 100 ){
+      
+      if(wheel_in.id == UNIHUB){
+        // Uni Hub buttons
+        // BUT_5 array (optional 3 buttons)
+        bt_button(19, wheel_in.btnHub[0]&0x08);
+        bt_button(20, wheel_in.btnHub[0]&0x10);
+        bt_button(21, wheel_in.btnHub[0]&0x20);
+        // Playstation buttons
+        bt_button(22, wheel_in.btnPS[0]&0x01);
+        bt_button(23, wheel_in.btnPS[0]&0x02);
+        bt_button(24, wheel_in.btnPS[0]&0x04);
+        bt_button(25, wheel_in.btnPS[0]&0x08);
+        bt_button(26, wheel_in.btnPS[0]&0x10);
+        bt_button(27, wheel_in.btnPS[0]&0x20);
+        bt_button(28, wheel_in.btnPS[0]&0x40);
+        bt_button(29, wheel_in.btnPS[0]&0x80);
+
+        bt_button(30, wheel_in.btnPS[1]&0x01);
+        bt_button(31, wheel_in.btnPS[1]&0x02);
+        bt_button(32, wheel_in.btnPS[1]&0x04);
+        bt_button(33, wheel_in.btnPS[1]&0x08);
+        bt_button(34, wheel_in.btnPS[1]&0x10);
+        bt_button(35, wheel_in.btnPS[1]&0x20);
+        bt_button(36, wheel_in.btnPS[1]&0x40);
+        bt_button(37, wheel_in.btnPS[1]&0x80);
+      }
+      
+      #ifdef IS_USB
+      if( rotary_debounce > 0 && rotary_debounce <= 50){
        rotary_debounce++;
-      } else {
-    */
-      if (rotary_debounce == 0) {    
+      } else if (rotary_debounce > 50){
+        rotary_debounce = 0;
+      }
+      #endif
+      if (rotary_debounce == 0) 
+      {    
         //rotary_debounce = 0;
         rotary_value = wheel_in.encoder;
         
         bt_button(17, rotary_value==-1);
         bt_button(18, rotary_value==1);
         if (rotary_value != 0){
-          Serial.println(String("DBNCE START!!!!!!!!!ROTARY : ") + rotary_value);
+          #ifdef HAS_DEBUG
+    Serial.println(String("DBNCE START!!!!!!!!!ROTARY : ") + rotary_value);
+    #endif
           rotary_debounce++;
         }
       }
@@ -198,71 +235,142 @@ void loop() {
     }
   
     // Send HID report (all inputs)
-    //Joystick.send_now();
-      if(bt_delay > max_delay)
+    #ifdef IS_USB
+      Joystick.send_now();
+      //rotary_debounce = 0;
+    #else
+    uint32_t timout;
+    timout = micros() - timing;
+      if(timout > max_delay || (in_changed && timout > 0))
       {
         //hid_data[3] = (hid_data[3]+1)&0xff;
         iwrap_send_data(main_link_id, sizeof(hid_data), hid_data, iwrap_mode);
-        
-        in_changed = false;
+        timing = micros();
         bt_delay = 0;
+  #ifdef HAS_DEBUG
         if (rotary_debounce!=0)Serial.println(String("RESET!!!!!!!!!ROTARY : ") + rotary_value);
+        if (in_changed)Serial.println("input sent");
+  #endif
+        in_changed = false;
         rotary_debounce = 0;
       }
       bt_delay++;
+
+      #endif
   }
 
+  #ifndef IS_USB
   // Read WT12 incoming data
   uint16_t result;
-  while((result = WT12.read()) < 256) iwrap_parse(result & 0xFF, iwrap_mode);
 
+  while((result = WT12.read()) < 256 && !got_hid) iwrap_parse(result & 0xFF, iwrap_mode);
+  if(got_hid) got_hid = false;
+  #endif
+  //timing = micros() - timing;
+  //if(timing > 550)  Serial.println(String("timing: ") + timing);
   // some delay
-  //idle();
+  idle();
 }
 
 void bt_button(uint8_t button, bool val) {
+  #ifdef IS_USB
+    Joystick.button(button, val);
+  #else
   uint8_t old;
   if (--button >= 18) return;
   if (button >= 16) {
       old = hid_data[5];
       if (val) hid_data[5] |= (0x1 << (button-16));
       else hid_data[5] &= ~(0x1 << (button-16));     
-      if (old != hid_data[5]) in_changed = true;
+      if (old != hid_data[5]){
+        in_changed = true;   
+        #ifdef HAS_DEBUG
+          Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[5]);
+        #endif
+      } 
   } else if (button >= 8) {
       old = hid_data[4];
       if (val) hid_data[4] |= (0x1 << (button-8));
       else hid_data[4] &= ~(0x1 << (button-8));     
-      if (old != hid_data[4]) in_changed = true;     
+      if (old != hid_data[4]){
+        in_changed = true;   
+        #ifdef HAS_DEBUG
+          Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[4]);
+        #endif
+      } 
   } else {
       old = hid_data[3];
       if (val) hid_data[3] |= (0x1 << (button));
       else hid_data[3] &= ~(0x1 << (button));         
-      if (old != hid_data[3]) in_changed = true;   
+      if (old != hid_data[3]){
+        in_changed = true;   
+        #ifdef HAS_DEBUG
+          Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[3]);
+        #endif
+      } 
   }
+  #endif
 }
 
 void bt_X(unsigned int val) {
+  #ifdef IS_USB
+    Joystick.X(val);
+  #else
   uint8_t old = hid_data[6];
   hid_data[6] = val & 0xFF;
-  if (old != hid_data[6]) in_changed = true;    
+  if (old != hid_data[6]) {
+    in_changed = true;
+    #ifdef HAS_DEBUG
+      Serial.println(String("bt_X: new input! ") + old + " -> " + hid_data[6]);
+    #endif
+  }
+  #endif
 }
 
 void bt_Y(unsigned int val) {
+  #ifdef IS_USB
+    Joystick.Y(val);
+  #else
   uint8_t old = hid_data[7];
   hid_data[7] = val & 0xFF;
-  if (old != hid_data[7]) in_changed = true;   
+  if (old != hid_data[7]){
+    in_changed = true;   
+    #ifdef HAS_DEBUG
+      Serial.println(String("bt_Y: new input! ") + old + " -> " + hid_data[7]);
+    #endif
+  } 
+  #endif
 }
 
-inline void bt_hat(int val) {
+void bt_hat(int val) {
+  #ifdef IS_USB
+    Joystick.hat(val);
+  #else
   uint8_t old = hid_data[8];
   hid_data[8] = val & 0xFF;
-  if (old != hid_data[8]) in_changed = true;   
+  if (old != hid_data[8]){
+        in_changed = true;   
+        #ifdef HAS_DEBUG
+          Serial.println(String("bt_hat: new input! ") + old + " -> " + hid_data[8]);
+        #endif
+      } 
+      #endif
 }
 
 void bt_setWheel(unsigned int val) {
-  uint8_t old = hid_data[32];
-  hid_data[32] = val & 0xFF;
-  if (old != hid_data[32]) in_changed = true;   
+  wheel_out.id = val & 0xFF;
+  #ifdef IS_USB
+    Joystick.setWheel(val);
+  #else
+    uint8_t old = hid_data[32];
+    hid_data[32] = wheel_out.id;
+    if (old != hid_data[32]){
+          in_changed = true;   
+          #ifdef HAS_DEBUG
+            Serial.println(String("bt_setWheel: new input! ") + old + " -> " + hid_data[32]);
+          #endif
+        }
+  #endif 
 }
         
 int iwrap_out(int len, unsigned char *data) {
@@ -275,70 +383,105 @@ int iwrap_out(int len, unsigned char *data) {
       //Serial.println(String("sent : ") + nbytes );
   } else {
       bt_retry = true;
-      Serial.println(String("Throttling (")+max_delay+")");
+      #ifdef HAS_DEBUG
+      Serial.println(String("[!] Throttling (")+max_delay+")");
+      #endif
       bt_delay = -32000;
       max_delay++;
       //delay(1000);
   }
-  
+  //got_hid = true;
   return nbytes;
 }
     
 void hid_output(uint8_t link_id, uint16_t data_length, const uint8_t *data) {
-  Serial.println(String("HID OUTPUT FROM " )+ link_id + " (size:" + data_length + ")");
-  
-  for(int i=0; i<data_length; i++) {
-    Serial.print(data[i], HEX);
-    Serial.print(":");
-    
+  #ifdef HAS_DEBUG
+  timing_bt = millis() - timing_bt;
+  if(timing_bt <= 35){
+    Serial.println(String("[W] low timing :") + timing_bt + "ms ");
+    //delay(10+(35-timing_bt));
   }
-  Serial.println();
-
+  #endif
   if(data[2] == 0x01 && data[3] == 0x02){
       // 7 seg
       wheel_out.disp[0] = (data[4] & 0xff);
       wheel_out.disp[1] = (data[5] & 0xff);
       wheel_out.disp[2] = (data[6] & 0xff);
-  }
-  if(data[2] == 0x01 && data[3] == 0x03){
+      #ifdef HAS_DEBUG
+        Serial.println(String("HID display: " )+ wheel_out.disp[0]+":"+wheel_out.disp[1]+":"+wheel_out.disp[2]);
+      #endif
+  } else if(data[2] == 0x01 && data[3] == 0x03){
       // rumbles
+    if (wheel_out.id != UNIHUB){
       wheel_out.rumble[0] = (data[4] & 0xff);
       wheel_out.rumble[1] = (data[5] & 0xff);
-  }
-  if(data[2] == 0x08){
+    }
+      #ifdef HAS_DEBUG
+        Serial.println(String("HID rumbles: " )+ wheel_out.rumble[0]+":"+wheel_out.rumble[1]);
+      #endif
+  } else if(data[2] == 0x08){
       // Rev Lights
+    if (wheel_out.id != UNIHUB){
       wheel_out.leds = (data[3] & 0xff) << 8 | (data[4] & 0xff);
       //ftx_pck[5] = (hid_pck[4] & 0xff);
       //ftx_pck[6] = (hid_pck[3] & 0xff);
+    }
+      #ifdef HAS_DEBUG
+        Serial.println(String("HID leds   : " )+ wheel_out.leds);
+      #endif
+  } else {
+      #ifdef HAS_DEBUG
+        Serial.print(String("[!] HID Unknown from " )+ link_id + " (size:" + data_length + ") : ");
+        
+        for(int i=0; i<data_length; i++) {
+          Serial.print(data[i], HEX);
+          Serial.print(":");
+          
+        }
+        Serial.println();
+      #endif
   }
+  timing_bt = millis();
 }
 
+#ifdef HAS_DEBUG
 int my_iwrap_debug(const char *data) {
   return Serial.print(data);
 }
+#endif
 
 void my_iwrap_evt_ring(uint8_t link_id, const iwrap_address_t *address, uint16_t channel, const char *profile) {
+  #ifdef HAS_DEBUG
   Serial.println(String("Connection from " )+ link_id);
+  #endif
   bt_connected = true;
 }
 
 void my_iwrap_evt_hid_suspend(uint8_t link_id) {
+  #ifdef HAS_DEBUG
   Serial.println(String("Disconnection from " )+ link_id);
+  #endif
   bt_connected = false;
 }
 
 void my_iwrap_evt_no_carrier(uint8_t link_id, uint16_t error_code, const char *message) {
+  #ifdef HAS_DEBUG
   Serial.println(String("Disconnection from " )+ link_id);
+  #endif
   bt_connected = false;
 }
 
 void my_iwrap_rsp_list_result(uint8_t link_id, const char *mode, uint16_t blocksize, uint32_t elapsed_time, uint16_t local_msc, uint16_t remote_msc, const iwrap_address_t *bd_addr, uint16_t channel, uint8_t direction, uint8_t powermode, uint8_t role, uint8_t crypt, uint16_t buffer, uint8_t eretx) {
+  #ifdef HAS_DEBUG
   Serial.println(String("Already connected to ") + link_id);
+  #endif
   bt_connected = true;
 }
 
 void idle() {
+  #ifndef IS_USB
     delay(2);
+  #endif
 }
 
 

@@ -87,7 +87,7 @@ static uint8_t device_descriptor[] = {
         EP0_SIZE,                               // bMaxPacketSize0
         LSB(VENDOR_ID), MSB(VENDOR_ID),         // idVendor
         LSB(PRODUCT_ID), MSB(PRODUCT_ID),       // idProduct
-        0x01, 0x03,                             // bcdDevice
+        0x02, 0x01,                             // bcdDevice
         1,                                      // iManufacturer
         2,                                      // iProduct
         3,                                      // iSerialNumber
@@ -115,19 +115,21 @@ static uint8_t joystick_report_desc[] = {
     0x09, 0x04,                    // USAGE (Joystick)
     0xa1, 0x01,                    // COLLECTION (Application)
 
-        // 18 Buttons (18bits)
+        // 35 Buttons (37bits)
         0x05, 0x09,                    //   USAGE_PAGE (Button)
             0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
-            0x29, 0x12,                    //   USAGE_MAXIMUM (Button 18)
+            0x29, 0x25,                    //   USAGE_MAXIMUM (Button 37)
             0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
             0x25, 0x01,                    //   LOGICAL_MAXIMUM (1)
             0x75, 0x01,                    //   REPORT_SIZE (1)
-            0x95, 0x12,                    //   REPORT_COUNT (18)
+            0x95, 0x25,                    //   REPORT_COUNT (32)
             0x81, 0x02,                    //   INPUT (Data,Var,Abs)
-              //   padding ( 18 + 6 -> 24)
+              //   no padding ( 37+3 -> 40 )
+            
             0x95, 0x01,                    //   REPORT_COUNT (1)
-            0x75, 0x06,                    //   REPORT_SIZE (6)
+            0x75, 0x03,                    //   REPORT_SIZE (3)
             0x81, 0x01,                    //   INPUT (Cnst,Ary,Abs)
+            
 
         // left stick axis (16bits)
         0x05, 0x01,                    //   USAGE_PAGE (Generic Desktop)
@@ -151,12 +153,12 @@ static uint8_t joystick_report_desc[] = {
             0x75, 0x04,                    //   REPORT_SIZE (4)
             0x95, 0x01,                    //   REPORT_COUNT (1)
             0x81, 0x42,                    //   INPUT (Data,Var,Abs)
-              //   padding ( 4 + 4 -> 8)
-            0x95, 0x35,                    //   REPORT_COUNT (1)
+              //   padding ( 4 + 196 -> 200)
+            0x95, 0x31,                    //   REPORT_COUNT (49)
             0x75, 0x04,                    //   REPORT_SIZE (4)
             0x81, 0x01,                    //   INPUT (Cnst,Ary,Abs)
 
-        // Total size : 48bits -> 6bytes
+        // Total size : 56bits -> 7bytes
 
     // 4 LEDs
     
