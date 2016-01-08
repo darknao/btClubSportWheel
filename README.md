@@ -22,6 +22,9 @@ The Teensy-LC is a good choice for this project as it has a small size & price.
 - [LiPo Battery (>=1000mA)](https://www.adafruit.com/categories/138) : **~10$**
 
 Total price for full BT conversion : **~60$**
+
+If you don't want to salvage the existing connector in your rim, you'll need a **JST 2.0mm PH** Female Connector (12-Pin for the Universal Hub, 8-Pin for all other rims).
+
 ### Pinout & schematics
 #### Fanatec Plug
 ![Fanatec Round Plug](http://i.imgur.com/yLSG0Jsm.jpg)
@@ -34,26 +37,37 @@ Total price for full BT conversion : **~60$**
 6. SCK 
 7. 3v3 
 8. CS 
+9. USB charge 5v*
+10. -
+11. DataPort1*
+12. USB charge GND*
+13. DataPort2*
+
+** These pin are only used on the Universal Hub and don't need to be connected for this conversion*
+
+#### Matching pin for Formula / BMW / Porsche ####
+![Porsche plug pinout](http://i.imgur.com/WazqNZlm.jpg)
+
+#### Matching pin for Universal Hub plug ####
+![UNI Hub pinout](http://i.imgur.com/pC5L8Lum.jpg)
 
 #### Teensy pinout
 ![Teensy pinout](http://i.imgur.com/5yfoka2.png)
 
 ## Compatible CSW Wheel
-Formula, BMW M3 GT2 and Porsche 918 rims are confirmed working with this conversion.  
-The Universal Hub may also work, but it has not been tested for now.
+All CSW rims are working with this conversion. That includes:
+
+- Formula Black/Carbon
+- BMW M3 GT2
+- Porsche 918 RSR
+- Universal Hub (not the xbox one version)
 
 ## Sofware/Driver Required
 This is detected has a HID device on Windows, so no specific drivers are required.  
-It's is fully compatible with Fanaleds, which is required to get all feedback indicator working (LEDs, display and motors).
+It's is fully compatible with Fanaleds, which is required to get all feedback indicator working (LEDs, display and motors, if any).
 
 ## Supported CSW wheel features
-- All buttons (12 including the small tuning button)
-- 2 paddle shifter
-- Analog joystick (2 axis)
-- 7-way encoder switch (4 way hat + rotary encoder + push button)
-- LED bar (revlights) [Fanaleds]
-- LED display [Fanaleds]
-- Rumble motors [Fanaleds]
+Well... Everything.
 
 ## Precompiled firmware
 You'll need the [Teensy Loader](https://www.pjrc.com/teensy/loader.html) to flash these firmwares.
