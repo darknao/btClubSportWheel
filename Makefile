@@ -1,7 +1,7 @@
 TARGETPATH = firmware
 
 # The teensy version to use, 30, 31, or LC
-TEENSY = LC
+TEENSY = 31
 
 # Device type: USB (wired) or BT (bluetooth)
 TYPE = USB
@@ -75,7 +75,8 @@ CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
 CFLAGS =
 
 # linker options
-LDFLAGS = -Os -Wl,--gc-sections -mthumb
+UNIX_TIME = $(shell date '+%s')
+LDFLAGS = -Os -Wl,--gc-sections,--defsym=__rtc_localtime=$(UNIX_TIME) -mthumb
 
 # additional libraries to link
 LIBS = -lm
