@@ -6,10 +6,15 @@ This firmware can convert any Fanatec CSW Steering Wheel to a **standalone USB v
 It'll also be possible to add a bluetooth module to go wireless and get rid of the USB cable (Work in progress).
 
 ## Supported Hardware
-This firmware has been developped and tested on a **Teensy 3.1** and **Teensy LC** but should work with any other compatible hardware.  
+This firmware has been developed and tested on a **Teensy 3.1** and **Teensy LC** but should work with any other compatible hardware.  
 The only requirement so far, is at least 1 SPI connectivity available.
 
 The Teensy-LC is a good choice for this project as it has a small size & price.
+
+### Note on the Bluetooth version
+I don't recommend the bluetooth version for now. It's still a work in progress, and there is a few issues with Fanaleds, occasionally inducing some input lags, and an incompatibility Windows 10.
+
+If you don't plan on using Fanaleds or want to try it anyway, then go ahead.
 
 ### Shopping List
 #### USB version
@@ -72,11 +77,17 @@ Well... Everything.
 ## Precompiled firmware
 You'll need the [Teensy Loader](https://www.pjrc.com/teensy/loader.html) to flash these firmwares.
 
-**Teensy 3.1 & 3.2** : [`USB`](firmware/teensy31_USB.hex) | `Bluetooth` (not ready yet)  
-**Teensy LC** : [`USB`](firmware/teensyLC_USB.hex) | `Bluetooth` (not ready yet)
+**Teensy 3.1 & 3.2** : [`USB`](firmware/csw.teensy31_USB.hex) | [`Bluetooth`](firmware/csw.teensy31_BT.hex)
+**Teensy LC** : [`USB`](firmware/csw.teensyLC_USB.hex) | [`Bluetooth`](firmware/csw.teensyLC_BT.hex)
 
 ## Building Instruction
-This code is based on Teensyduino framework and all required library is included in this repo. 
-All you need is a arm compiler (apt-get install gcc-arm-none-eabi on ubuntu).  
+This code is based on Teensyduino framework and all required libraries are included in this repo.
+Modify the **TEENSY** and **TYPE** variables in `Makefile` to reflect your needs.
 Use `make` to build the HEX file, then use the Teensy loader to flash the firmware.
 
+## Contribution
+There is a lot of room for improvement, so if you want to contribute, you're welcome to [fork](https://help.github.com/articles/fork-a-repo/) this project, and send me a [pull request](https://help.github.com/articles/using-pull-requests/).
+
+## Donation
+If you like this project and want to support it, or just want to pay me a beer or two ;)
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=89TWYN8U3P8QL"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" alt="[paypal]" /></a>

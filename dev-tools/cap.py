@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 """
-This script read data comming from a fanatec wheel.
+This script read/write data comming from a fanatec wheel.
 Copyright (C) 2015 darknao
 https://github.com/darknao/btClubSportWheel
 
@@ -127,8 +127,8 @@ details:
 buttons array1:
 o o o o  o o o o | o o o o  o o o o | o o o o  o o o o
 
-buttons copy report the same buttons as buttons array, in another order (UNI HUB only)
-Except for BUT_5 wich is only reported headers (first octet, values are 08 10 20)
+'buttons copy' report the same buttons as 'buttons array', in another order (UNI HUB only)
+Except for BUT_5 which is only reported once (first octet, values are 08 10 20)
 
 
 

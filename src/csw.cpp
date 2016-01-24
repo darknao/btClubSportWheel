@@ -34,7 +34,7 @@ uint8_t iwrap_mode = IWRAP_MODE_MUX;
 
 uint8_t hid_data[35];
 int16_t bt_delay = 0;
-uint32_t max_delay = 150000; //40; // overhead if below 30 (120ms)
+uint32_t max_delay = 150000; // overhead if below 120ms
 // 400 is too short with fanaleds
 
 bool in_changed;
@@ -213,8 +213,8 @@ void loop() {
         bt_button(18, rotary_value==1);
         if (rotary_value != 0){
           #ifdef HAS_DEBUG
-    Serial.println(String("DBNCE START!!!!!!!!!ROTARY : ") + rotary_value);
-    #endif
+            Serial.println(String("DBNCE START!!!!!!!!!ROTARY : ") + rotary_value);
+          #endif
           rotary_debounce++;
         }
       }
@@ -248,10 +248,10 @@ void loop() {
         iwrap_send_data(main_link_id, sizeof(hid_data), hid_data, iwrap_mode);
         timing = micros();
         bt_delay = 0;
-  #ifdef HAS_DEBUG
-        if (rotary_debounce!=0)Serial.println(String("RESET!!!!!!!!!ROTARY : ") + rotary_value);
-        if (in_changed)Serial.println("input sent");
-  #endif
+        #ifdef HAS_DEBUG
+          if (rotary_debounce!=0)Serial.println(String("RESET!!!!!!!!!ROTARY : ") + rotary_value);
+          if (in_changed)Serial.println("input sent");
+        #endif
         in_changed = false;
         //rotary_debounce = 0;
       }
@@ -370,12 +370,12 @@ void bt_hat(int val) {
   uint8_t old = hid_data[10];
   hid_data[10] = val & 0xFF;
   if (old != hid_data[10]){
-        in_changed = true;   
-        #ifdef HAS_DEBUG
-          Serial.println(String("bt_hat: new input! ") + old + " -> " + hid_data[10]);
-        #endif
-      } 
-      #endif
+    in_changed = true;   
+    #ifdef HAS_DEBUG
+      Serial.println(String("bt_hat: new input! ") + old + " -> " + hid_data[10]);
+    #endif
+  } 
+  #endif
 }
 
 void bt_setWheel(unsigned int val) {
@@ -386,11 +386,11 @@ void bt_setWheel(unsigned int val) {
     uint8_t old = hid_data[32];
     hid_data[32] = wheel_out.id;
     if (old != hid_data[32]){
-          in_changed = true;   
-          #ifdef HAS_DEBUG
-            Serial.println(String("bt_setWheel: new input! ") + old + " -> " + hid_data[32]);
-          #endif
-        }
+      in_changed = true;   
+      #ifdef HAS_DEBUG
+        Serial.println(String("bt_setWheel: new input! ") + old + " -> " + hid_data[32]);
+      #endif
+    }
   #endif 
 }
         
