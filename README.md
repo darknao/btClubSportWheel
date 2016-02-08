@@ -57,8 +57,13 @@ If you don't want to salvage the existing connector in your rim, you'll need a *
 #### Matching pin for Universal Hub plug ####
 ![UNI Hub pinout](http://i.imgur.com/pC5L8Lum.jpg)
 
-#### Teensy pinout
-![Teensy pinout](http://i.imgur.com/5yfoka2.png)
+#### Wiring Schematics
+![Wiring schematics](http://i.imgur.com/k28ymJz.jpg)
+This is the same schematics for Bluetooth and USB version.  
+Just forget about the Adafruit Power Boost (upper left) and the Bluegiga WT12 (bottom right) for the USB version.
+
+#### Bluetooth WT12 specifics
+Before flashing your Teensy, you'll need to configure the WT12 module by following this [howto](iwrap.md).
 
 ## Compatible CSW Wheel
 All CSW rims are working with this conversion. That includes:
@@ -78,10 +83,10 @@ Well... Everything.
 ## Precompiled firmware
 You'll need the [Teensy Loader](https://www.pjrc.com/teensy/loader.html) to flash these firmwares.
 
-**Teensy 3.1 & 3.2** : [`USB`](firmware/csw.teensy31_USB.hex) | [`Bluetooth`](firmware/csw.teensy31_BT.hex)
+**Teensy 3.1 & 3.2** : [`USB`](firmware/csw.teensy31_USB.hex) | [`Bluetooth`](firmware/csw.teensy31_BT.hex)  
 **Teensy LC** : [`USB`](firmware/csw.teensyLC_USB.hex) | [`Bluetooth`](firmware/csw.teensyLC_BT.hex)
 
-## Building Instruction
+## Firmware Building Instruction
 This code is based on Teensyduino framework and all required libraries are included in this repo.  
 Modify the **TEENSY** and **TYPE** variables in `Makefile` to reflect your needs.  
 Use `make` to build the HEX file, then use the Teensy loader to flash the firmware.
