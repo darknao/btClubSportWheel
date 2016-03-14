@@ -83,8 +83,8 @@ Well... Everything.
 ## Precompiled firmware
 You'll need the [Teensy Loader](https://www.pjrc.com/teensy/loader.html) to flash these firmwares.
 
-**Teensy 3.1 & 3.2** : [`USB`](firmware/csw.teensy31_USB.hex) | [`Bluetooth`](firmware/csw.teensy31_BT.hex)  
-**Teensy LC** : [`USB`](firmware/csw.teensyLC_USB.hex) | [`Bluetooth`](firmware/csw.teensyLC_BT.hex)
+**Teensy 3.1 & 3.2** : [`USB`](https://raw.githubusercontent.com/darknao/btClubSportWheel/master/firmware/csw.teensy31_USB.hex) | [`Bluetooth`](https://raw.githubusercontent.com/darknao/btClubSportWheel/master/firmware/csw.teensy31_BT.hex)  
+**Teensy LC** : [`USB`](https://raw.githubusercontent.com/darknao/btClubSportWheel/master/firmware/csw.teensyLC_USB.hex) | [`Bluetooth`](https://raw.githubusercontent.com/darknao/btClubSportWheel/master/firmware/csw.teensyLC_BT.hex)
 
 ## Firmware Building Instruction
 This code is based on Teensyduino framework and all required libraries are included in this repo.  
