@@ -72,6 +72,14 @@ uint8_t hid_pck[7];
 void setup() {
   fsetup();
 
+  /* 8 Extra Buttons
+    can be connected 
+    from pin 2 to pin 9 */
+  for (int pin = 2; pin <= 9; ++pin)
+  {
+    pinMode(pin, INPUT_PULLUP);
+  }
+
   /* WT12 */
   #ifndef IS_USB
   pinMode (CTS, INPUT);
@@ -196,7 +204,6 @@ void loop() {
         bt_button(37, wheel_in.btnPS[1]&0x80);
       }
       
-      
       if( rotary_debounce > 0 && rotary_debounce <= 50){
        rotary_debounce++;
       } else if (rotary_debounce > 50){
@@ -235,6 +242,12 @@ void loop() {
       
     }
   
+    // 8 Extra Buttons
+    for (int i = 0; i < 8; ++i)
+    {
+      bt_button(38+i, !digitalRead(2+i));
+    }
+
     // Send HID report (all inputs)
     #ifdef IS_USB
       Joystick.send_now();
@@ -278,57 +291,67 @@ void bt_button(uint8_t button, bool val) {
     Joystick.button(button, val);
   #else
   uint8_t old;
-  if (--button >= 37) return;
-  if (button >= 32) {
+  if (--button >= 48) return;
+    if (button >= 40) {
+      old = hid_data[8];
+      if (val) hid_data[8] |= (0x1 << (button-40));
+      else hid_data[8] &= ~(0x1 << (button-40));
+      if (old != hid_data[8]){
+        in_changed = true;
+        #ifdef HAS_DEBUG
+          Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[8]);
+        #endif
+      }
+  } else if (button >= 32) {
       old = hid_data[7];
       if (val) hid_data[7] |= (0x1 << (button-32));
-      else hid_data[7] &= ~(0x1 << (button-32));     
+      else hid_data[7] &= ~(0x1 << (button-32));
       if (old != hid_data[7]){
-        in_changed = true;   
+        in_changed = true;
         #ifdef HAS_DEBUG
           Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[7]);
         #endif
-      } 
+      }
   } else if (button >= 24) {
       old = hid_data[6];
       if (val) hid_data[6] |= (0x1 << (button-24));
-      else hid_data[6] &= ~(0x1 << (button-24));     
+      else hid_data[6] &= ~(0x1 << (button-24));
       if (old != hid_data[6]){
-        in_changed = true;   
+        in_changed = true;
         #ifdef HAS_DEBUG
           Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[6]);
         #endif
-      } 
+      }
   } else if (button >= 16) {
       old = hid_data[5];
       if (val) hid_data[5] |= (0x1 << (button-16));
-      else hid_data[5] &= ~(0x1 << (button-16));     
+      else hid_data[5] &= ~(0x1 << (button-16));
       if (old != hid_data[5]){
-        in_changed = true;   
+        in_changed = true;
         #ifdef HAS_DEBUG
           Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[5]);
         #endif
-      } 
+      }
   } else if (button >= 8) {
       old = hid_data[4];
       if (val) hid_data[4] |= (0x1 << (button-8));
-      else hid_data[4] &= ~(0x1 << (button-8));     
+      else hid_data[4] &= ~(0x1 << (button-8));
       if (old != hid_data[4]){
-        in_changed = true;   
+        in_changed = true;
         #ifdef HAS_DEBUG
           Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[4]);
         #endif
-      } 
+      }
   } else {
       old = hid_data[3];
       if (val) hid_data[3] |= (0x1 << (button));
-      else hid_data[3] &= ~(0x1 << (button));         
+      else hid_data[3] &= ~(0x1 << (button));
       if (old != hid_data[3]){
-        in_changed = true;   
+        in_changed = true;
         #ifdef HAS_DEBUG
           Serial.println(String("bt_button: new input! ") + old + " -> " + hid_data[3]);
         #endif
-      } 
+      }
   }
   #endif
 }
@@ -337,12 +360,12 @@ void bt_X(unsigned int val) {
   #ifdef IS_USB
     Joystick.X(val);
   #else
-  uint8_t old = hid_data[8];
-  hid_data[8] = val & 0xFF;
-  if (old != hid_data[8]) {
+  uint8_t old = hid_data[9];
+  hid_data[9] = val & 0xFF;
+  if (old != hid_data[9]) {
     in_changed = true;
     #ifdef HAS_DEBUG
-      Serial.println(String("bt_X: new input! ") + old + " -> " + hid_data[8]);
+      Serial.println(String("bt_X: new input! ") + old + " -> " + hid_data[9]);
     #endif
   }
   #endif
@@ -352,12 +375,12 @@ void bt_Y(unsigned int val) {
   #ifdef IS_USB
     Joystick.Y(val);
   #else
-  uint8_t old = hid_data[9];
-  hid_data[9] = val & 0xFF;
-  if (old != hid_data[9]){
+  uint8_t old = hid_data[10];
+  hid_data[10] = val & 0xFF;
+  if (old != hid_data[10]){
     in_changed = true;   
     #ifdef HAS_DEBUG
-      Serial.println(String("bt_Y: new input! ") + old + " -> " + hid_data[9]);
+      Serial.println(String("bt_Y: new input! ") + old + " -> " + hid_data[10]);
     #endif
   } 
   #endif
@@ -367,12 +390,12 @@ void bt_hat(int val) {
   #ifdef IS_USB
     Joystick.hat(val);
   #else
-  uint8_t old = hid_data[10];
-  hid_data[10] = val & 0xFF;
-  if (old != hid_data[10]){
+  uint8_t old = hid_data[11];
+  hid_data[11] = val & 0xFF;
+  if (old != hid_data[11]){
     in_changed = true;   
     #ifdef HAS_DEBUG
-      Serial.println(String("bt_hat: new input! ") + old + " -> " + hid_data[10]);
+      Serial.println(String("bt_hat: new input! ") + old + " -> " + hid_data[11]);
     #endif
   } 
   #endif
