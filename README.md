@@ -76,7 +76,7 @@ All CSW rims are working with this conversion. That includes:
 ## Software/Driver Required
 This is detected has a HID device on Windows, so no specific drivers are required.  
 It's is fully compatible with Fanaleds, which is required to get all feedback indicator working (LEDs, display and motors, if any).  
-Alternativly, you can use SLIMax Manager Pro, which is free if used with any Fanatec wheel.
+Alternatively, you can use SLIMax Manager Pro, which is free if used with any Fanatec wheel.
 
 ## Supported CSW wheel features
 Well... Everything.
