@@ -156,7 +156,7 @@ static uint8_t joystick_report_desc[] = {
         // Total size : 256bits -> 32bytes (JOYSTICK_SIZE)
 
     // 4 LEDs
-    
+
     0x05, 0x0a,                    //   USAGE_PAGE (Ordinals)
     0x09, 0x01,                    //   USAGE (Instance 1)
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
@@ -198,12 +198,12 @@ static uint8_t joystick_report_desc[] = {
     0x91, 0x01,                    // OUTPUT (Cnst,Ary,Abs)
       //  no padding ( 64 )
     0xc0                           // END_COLLECTION
-    
+
     /*
     0x05, 0x0a,                    //   USAGE_PAGE (Ordinals)
     0x09, 0x01,                    //   USAGE (Instance 1)
     0xa1, 0x01,                    //   COLLECTION (Application)
-    //0x85, 0x01,                      // REPORT_ID (1) 
+    //0x85, 0x01,                      // REPORT_ID (1)
     0x05, 0x08,                    //     USAGE_PAGE (LEDs)
     0x09, 0x4b,                    //     USAGE (Generic Indicator)
     0x75, 0x01,                    //     REPORT_SIZE (8)
@@ -331,7 +331,7 @@ static uint8_t config_descriptor[CONFIG_DESC_SIZE] = {
         0x03,                                   // bmAttributes (0x03=intr)
         JOYSTICK_SIZE, 0,                       // wMaxPacketSize
         JOYSTICK_INTERVAL,                      // bInterval
-	// TODO: OUT endpoint for LEDs
+
         // OUT endpoint descriptor
         7,                                      // bLength
         5,                                      // bDescriptorType
