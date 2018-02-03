@@ -20,7 +20,14 @@
 
 #include "fanatec.h"
 
+// SPI setting to communicate with Fanatec PCB.
+// Basically default setting, except speed is set to 12Mhz
 SPISettings settingsA(12000000, MSBFIRST, SPI_MODE0);
+
+// Conversion table for CSW 7segs to CSL
+uint8_t csw2csl_disp[8] = {6, 4, 0, 2, 5, 7, 1, 3};
+
+wheel_type rim_inserted = NO_WHEEL;
 
 // CRC lookup table with polynomial of 0x131
 PROGMEM prog_uchar _crc8_table[256] = {
@@ -58,6 +65,7 @@ PROGMEM prog_uchar _crc8_table[256] = {
   182, 232, 10, 84, 215, 137, 107, 53
 };
 
+
 // return CRC8 from buf
 uint8_t crc8(const uint8_t* buf, uint8_t length) {
     uint8_t crc = 0xff;
@@ -69,74 +77,132 @@ uint8_t crc8(const uint8_t* buf, uint8_t length) {
     return crc;
 }
 
-// Send/Receive Fanatec Packet
-void transfer_data(csw_out_t* out, csw_in_t* in, uint8_t length) {
-  //uint8_t data[length]; // 32 bytes of data, 1 byte for CRC
-  //uint8_t crc;
+// Try to detect which wheel is connected by reading the header bit
+// transfer*Data also reset this state if the header bit is not the one expected
+wheel_type detectWheelType() {
+  if(!rim_inserted) {
+    switch(getFirstByte()) {
+      case 0x52: rim_inserted = CSW_WHEEL; break;
+      case 0xE0: rim_inserted = CSL_WHEEL; break;
+      default: rim_inserted = NO_WHEEL; break;
+    }
+  }
+  return rim_inserted;
+}
 
+// Fetch first byte from SPI transaction for protocol detection
+uint8_t getFirstByte() {
+  uint8_t firstByte;
+  // Send packet, twice (see transferCslData)
+  for (int z=0; z<2; z++) {
+    SPI.beginTransaction(settingsA);
+    digitalWrite(CS, LOW);
+    delayMicroseconds(1);
+    firstByte = SPI.transfer(0x00);
+    /*
+      The CSW µC will resume any previously interrupted transaction.
+      firstByte will then not be the actual first byte, but something between.
+      This loop make sure we reach the end of a transaction before starting a new one
+      The CSL (P1) transaction size is only 1 byte, so it's not affected.
+    */
+    for(int i=0; i<35; i++) {
+      SPI.transfer(0x00);
+    }
+    digitalWrite(CS, HIGH);
+    SPI.endTransaction();
+
+    // wait for CS to settle a little
+    delayMicroseconds(10);
+  }
+  return firstByte;
+}
+
+// CSW I/O
+void transferCswData(csw_out_t* out, csw_in_t* in, uint8_t length) {
   // get CRC
   out->crc = crc8(out->raw, length-1);
 
-  //memcpy(data, out, length);
-
-  // append CRC to data packet
-  //data[length-1] = crc;
-
-  // Send packet
-  digitalWrite(CS, LOW);
+  // Send/Receive packet
   SPI.beginTransaction(settingsA);
+  digitalWrite(CS, LOW);
   for(int i=0; i<length; i++) {
     in->raw[i] = SPI.transfer(out->raw[i]);
   }
-  SPI.endTransaction();
   digitalWrite(CS, HIGH);
-  // Bit shifting
+  SPI.endTransaction();
 
+  /*
+    The CSW frame start with a 1 bit value.
+    Its meaning is not certain, but it's more likely an error flag
+    set if the previous received packet was malformed.
+    This bit is discarded here, and everything is shifted
+    to realligned the data correctly with the csw_in_t struct.
+  */
   for (int i = 0;  i < length - 1;  ++i) {
      in->raw[i] = (in->raw[i] << 1) | ((in->raw[i+1] >> 7) & 1);
-  } 
-
-}
-
-/*
-void transfer_data2(const uint8_t* out, uint8_t* in, uint8_t length) {
-  uint8_t data[length]; // 32 bytes of data, 1 byte for CRC
-  uint8_t crc;
-  int i;
-
-  // get CRC
-  crc = crc8(out, length-1);
-
-  memcpy(data, out, length);
-
-  // append CRC to data packet
-  data[length-1] = crc;
-
-  // Send packet
-  // basic version
-  SPIFIFO.clear();
-  // Warm up the FIFO with 3 write
-  SPIFIFO.write(data[0], SPI_CONTINUE);
-  SPIFIFO.write(data[1], SPI_CONTINUE);
-  SPIFIFO.write(data[2], SPI_CONTINUE);
-  SPIFIFO.read();
-  for(i=3; i<length-1; i++) {
-    SPIFIFO.write(data[i], SPI_CONTINUE);
-    in[i-3] = SPIFIFO.read();
   }
-  SPIFIFO.write(data[i]);
-  in[i++] = SPIFIFO.read();
-  in[i++] = SPIFIFO.read();
-  in[i++] = SPIFIFO.read();
+  if (in->header != 0xa5) rim_inserted = NO_WHEEL;
 }
-*/
+
+// CSL I/O
+void transferCslData(csl_out_t* out, csl_in_t* in, uint8_t length, uint8_t selector) {
+  out->selector = selector;
+
+  /*
+    The CSL output is based on which selector we send.
+    Since we received and send simultaneously,
+    only the second packet is relevant.
+  */
+  for (int z=0; z<2; z++) {
+    SPI.beginTransaction(settingsA);
+    digitalWrite(CS, LOW);
+    delayMicroseconds(1);
+    for(int i=0; i<length; i++) {
+      in->raw[i] = SPI.transfer(out->raw[i]);
+    }
+    digitalWrite(CS, HIGH);
+    SPI.endTransaction();
+  }
+  if (out->selector == 0x00 && in->raw[0] != 0xE0) rim_inserted = NO_WHEEL;
+}
+
+// Convert the CSW 7seg bits to CSL
+uint8_t csw7segToCsl(uint8_t csw_disp) {
+  uint8_t csl_disp = 0x00;
+
+  for (uint8_t x=0; x < sizeof(csw2csl_disp); x++) {
+    csl_disp |=  ((~csw_disp >> x) & 0x1) << csw2csl_disp[x];
+  }
+  return csl_disp;
+}
+
+// Convert the CSW revlights bits to CSL RGB led
+uint8_t cswLedsToCsl(uint16_t csw_leds) {
+  uint8_t csl_leds = 0xFF;
+
+  // First 2 leds -> green
+  if (csw_leds & 0x180)
+    csl_leds = ~0x10;
+  // 3-4 -> yellow
+  if (csw_leds & 0x60)
+    csl_leds = ~0x50;
+  // 5-6 -> red
+  if (csw_leds & 0x18)
+    csl_leds = ~0x40;
+  // 7-8 -> blue
+  if (csw_leds & 0x6)
+    csl_leds = ~0x01;
+  // 9 -> white
+  if (csw_leds & 0x1)
+    csl_leds = ~0x51;
+
+  return csl_leds;
+}
 
 void fsetup() {
 
   pinMode(CS, OUTPUT);
-  digitalWrite(CS,HIGH); 
+  digitalWrite(CS, HIGH);
   SPI.begin();
   SPI.setClockDivider(0);
-
-
 }

@@ -23,16 +23,26 @@
 #include <SPI.h>
 #define CS 10
 
-#define FORMULA_RIM 1
-#define BMW_RIM 2
-#define RSR_RIM 3
+#define NO_RIM 0
+#define BMW_RIM 1
+#define FORMULA_RIM 2
+#define PORSCHE_RIM 3
 #define UNIHUB 4
+
+#define XBOXHUB 6
+#define CSLP1XBOX 7
+#define CSLP1PS4 8
+
+enum wheel_type {
+  NO_WHEEL,
+  CSW_WHEEL,
+  CSL_WHEEL
+};
 
 #pragma pack(push, 1)
 struct csw_in_t {
   union {
     struct {
-      //bool unk:1;
       uint8_t header;
       uint8_t id;
       uint8_t buttons[3];
@@ -44,7 +54,6 @@ struct csw_in_t {
 
       uint8_t garbage[20];
       uint8_t crc;
-      // +3 padding bits
     };
     uint8_t raw[34];
   };
@@ -65,11 +74,36 @@ struct csw_out_t {
     uint8_t raw[33];
   };
 };
+
+
+struct csl_out_t {
+  union {
+    struct {
+      uint8_t disp;
+      uint8_t selector;
+    };
+    uint8_t raw[2];
+  };
+};
+
+struct csl_in_t {
+  union {
+    struct {
+      uint8_t buttons;
+      uint8_t nothing;
+    };
+    uint8_t raw[2];
+  };
+};
 #pragma pack(pop)
 
+wheel_type detectWheelType();
+uint8_t getFirstByte();
 uint8_t crc8(const uint8_t* buf, uint8_t length);
-void transfer_data(csw_out_t* out, csw_in_t* in, uint8_t length);
-
+void transferCswData(csw_out_t* out, csw_in_t* in, uint8_t length);
+void transferCslData(csl_out_t* out, csl_in_t* in, uint8_t length, uint8_t selector);
+uint8_t csw7segToCsl(uint8_t csw_disp);
+uint8_t cswLedsToCsl(uint16_t csw_leds);
 
 void fsetup();
 #endif
