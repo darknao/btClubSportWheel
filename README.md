@@ -65,20 +65,27 @@ Just forget about the Adafruit Power Boost (upper left) and the Bluegiga WT12 (b
 #### Bluetooth WT12 specifics
 Before flashing your Teensy, you'll need to configure the WT12 module by following this [howto](iwrap.md).
 
-## Compatible CSW Wheel
-All CSW rims are working with this conversion. That includes:
+## Compatible Wheels
+All CSW / CSL rims are working with this conversion. That includes:
 
-- Formula Black/Carbon
 - BMW M3 GT2
+- Formula Black/Carbon
 - Porsche 918 RSR
-- Universal Hub (not the xbox one version)
+- Universal Hub (**both version**)
+- CSL P1 (both version)
+- M\*\*\*\*\*\*\*\*\*3 (soon :p)
+
+## Special note for the Universal Hub ##
+The Universal HUB brings you no more than 38 buttons. The Windows Control Panel will only show you 32, but don't worry, every modern DirectX games can go up to 128.
+
+If you need to test all of them, I suggest you to use [JoystickTest](http://www.planetpointy.co.uk/joystick-test-application/) as it can see them all.
 
 ## Software/Driver Required
 This is detected has a HID device on Windows, so no specific drivers are required.  
 It's is fully compatible with Fanaleds, which is required to get all feedback indicator working (LEDs, display and motors, if any).  
 Alternatively, you can use SLIMax Manager Pro, which is free if used with any Fanatec wheel.
 
-## Supported CSW wheel features
+## Supported wheel features
 Well... Everything.
 
 ## Precompiled firmware
