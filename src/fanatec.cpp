@@ -28,6 +28,7 @@ SPISettings settingsA(12000000, MSBFIRST, SPI_MODE0);
 uint8_t csw2csl_disp[8] = {6, 4, 0, 2, 5, 7, 1, 3};
 
 wheel_type rim_inserted = NO_WHEEL;
+unsigned int CS_WAIT = 5;
 
 // CRC lookup table with polynomial of 0x131
 PROGMEM prog_uchar _crc8_table[256] = {
@@ -97,7 +98,7 @@ uint8_t getFirstByte() {
   for (int z=0; z<2; z++) {
     SPI.beginTransaction(settingsA);
     digitalWrite(CS, LOW);
-    delayMicroseconds(1);
+    delayMicroseconds(CS_WAIT);
     firstByte = SPI.transfer(0x00);
     /*
       The CSW µC will resume any previously interrupted transaction.
@@ -125,6 +126,7 @@ void transferCswData(csw_out_t* out, csw_in_t* in, uint8_t length) {
   // Send/Receive packet
   SPI.beginTransaction(settingsA);
   digitalWrite(CS, LOW);
+  //delayMicroseconds(20);
   for(int i=0; i<length; i++) {
     in->raw[i] = SPI.transfer(out->raw[i]);
   }
@@ -156,7 +158,7 @@ void transferCslData(csl_out_t* out, csl_in_t* in, uint8_t length, uint8_t selec
   for (int z=0; z<2; z++) {
     SPI.beginTransaction(settingsA);
     digitalWrite(CS, LOW);
-    delayMicroseconds(1);
+    delayMicroseconds(CS_WAIT);
     for(int i=0; i<length; i++) {
       in->raw[i] = SPI.transfer(out->raw[i]);
     }
