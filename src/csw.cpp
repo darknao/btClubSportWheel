@@ -24,7 +24,7 @@
 
 #include "fanatec.h"
 #include "iWRAP.h"
-
+#include "Debouncer.h"
 
 /* WT12 (Bluetooth specifics) */
 #define WT12 Serial1
@@ -72,6 +72,9 @@ uint32_t timing_bt;
 
 uint8_t hid_pck[7];
 
+Debouncer * btDebncer = new Debouncer[49];
+Debouncer hatDebncer = Debouncer();
+
 byte rotary_debounce = 0;
 int8_t rotary_value = 0;
 uint8_t main_link_id = 1;
@@ -88,6 +91,12 @@ void setup() {
   {
     pinMode(pin, INPUT_PULLUP);
   }
+
+  // debounce timer for hat switch
+  hatDebncer.interval(50);
+  // debounce timer for rotary encoder
+  btDebncer[17].interval(30);
+  btDebncer[18].interval(30);
 
   /* WT12 */
   #ifndef IS_USB
@@ -218,28 +227,10 @@ void loop() {
           whButton(38, csw_in.btnHub[1] & 0x08);
         }
 
-        // Encoder switch
-        if( rotary_debounce > 0 && rotary_debounce <= 50){
-          rotary_debounce++;
-        } else if (rotary_debounce > 50){
-          rotary_debounce = 0;
-        }
+        rotary_value = csw_in.encoder;
 
-
-        if (rotary_debounce == 0)
-        {
-          // rotary_debounce = 0;
-          rotary_value = csw_in.encoder;
-
-          whButton(17, rotary_value == -1);
-          whButton(18, rotary_value == 1);
-          if (rotary_value != 0){
-            #ifdef HAS_DEBUG
-              Serial.println(String("DBNCE START!!!!!!!!!ROTARY : ") + rotary_value);
-            #endif
-            rotary_debounce++;
-          }
-        }
+        whButton(17, rotary_value == -1);
+        whButton(18, rotary_value == 1);
 
         whHat(csw_in.buttons[0] & 0x0f, false);
 
@@ -336,72 +327,73 @@ void loop() {
 }
 
 void whButton(uint8_t button, bool val) {
+  val = btDebncer[button].get(val);
   #ifdef IS_USB
     Joystick.button(button, val);
   #else
-  uint8_t old;
-  if (--button >= 48) return;
-    if (button >= 40) {
-      old = hid_data[8];
-      if (val) hid_data[8] |= (0x1 << (button-40));
-      else hid_data[8] &= ~(0x1 << (button-40));
-      if (old != hid_data[8]){
-        in_changed = true;
-        #ifdef HAS_DEBUG
-          Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[8]);
-        #endif
-      }
-  } else if (button >= 32) {
-      old = hid_data[7];
-      if (val) hid_data[7] |= (0x1 << (button-32));
-      else hid_data[7] &= ~(0x1 << (button-32));
-      if (old != hid_data[7]){
-        in_changed = true;
-        #ifdef HAS_DEBUG
-          Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[7]);
-        #endif
-      }
-  } else if (button >= 24) {
-      old = hid_data[6];
-      if (val) hid_data[6] |= (0x1 << (button-24));
-      else hid_data[6] &= ~(0x1 << (button-24));
-      if (old != hid_data[6]){
-        in_changed = true;
-        #ifdef HAS_DEBUG
-          Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[6]);
-        #endif
-      }
-  } else if (button >= 16) {
-      old = hid_data[5];
-      if (val) hid_data[5] |= (0x1 << (button-16));
-      else hid_data[5] &= ~(0x1 << (button-16));
-      if (old != hid_data[5]){
-        in_changed = true;
-        #ifdef HAS_DEBUG
-          Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[5]);
-        #endif
-      }
-  } else if (button >= 8) {
-      old = hid_data[4];
-      if (val) hid_data[4] |= (0x1 << (button-8));
-      else hid_data[4] &= ~(0x1 << (button-8));
-      if (old != hid_data[4]){
-        in_changed = true;
-        #ifdef HAS_DEBUG
-          Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[4]);
-        #endif
-      }
-  } else {
-      old = hid_data[3];
-      if (val) hid_data[3] |= (0x1 << (button));
-      else hid_data[3] &= ~(0x1 << (button));
-      if (old != hid_data[3]){
-        in_changed = true;
-        #ifdef HAS_DEBUG
-          Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[3]);
-        #endif
-      }
-  }
+    uint8_t old;
+    if (--button >= 48) return;
+      if (button >= 40) {
+        old = hid_data[8];
+        if (val) hid_data[8] |= (0x1 << (button-40));
+        else hid_data[8] &= ~(0x1 << (button-40));
+        if (old != hid_data[8]){
+          in_changed = true;
+          #ifdef HAS_DEBUG
+            Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[8]);
+          #endif
+        }
+    } else if (button >= 32) {
+        old = hid_data[7];
+        if (val) hid_data[7] |= (0x1 << (button-32));
+        else hid_data[7] &= ~(0x1 << (button-32));
+        if (old != hid_data[7]){
+          in_changed = true;
+          #ifdef HAS_DEBUG
+            Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[7]);
+          #endif
+        }
+    } else if (button >= 24) {
+        old = hid_data[6];
+        if (val) hid_data[6] |= (0x1 << (button-24));
+        else hid_data[6] &= ~(0x1 << (button-24));
+        if (old != hid_data[6]){
+          in_changed = true;
+          #ifdef HAS_DEBUG
+            Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[6]);
+          #endif
+        }
+    } else if (button >= 16) {
+        old = hid_data[5];
+        if (val) hid_data[5] |= (0x1 << (button-16));
+        else hid_data[5] &= ~(0x1 << (button-16));
+        if (old != hid_data[5]){
+          in_changed = true;
+          #ifdef HAS_DEBUG
+            Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[5]);
+          #endif
+        }
+    } else if (button >= 8) {
+        old = hid_data[4];
+        if (val) hid_data[4] |= (0x1 << (button-8));
+        else hid_data[4] &= ~(0x1 << (button-8));
+        if (old != hid_data[4]){
+          in_changed = true;
+          #ifdef HAS_DEBUG
+            Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[4]);
+          #endif
+        }
+    } else {
+        old = hid_data[3];
+        if (val) hid_data[3] |= (0x1 << (button));
+        else hid_data[3] &= ~(0x1 << (button));
+        if (old != hid_data[3]){
+          in_changed = true;
+          #ifdef HAS_DEBUG
+            Serial.println(String("whButton: new input! ") + old + " -> " + hid_data[3]);
+          #endif
+        }
+    }
   #endif
 }
 
@@ -432,6 +424,7 @@ void whStick(unsigned int x, unsigned int y) {
 }
 
 void whHat(int8_t val, bool is_csl) {
+  val = hatDebncer.get(val);
   if (is_csl) { // CSL
     switch (val){
       case 4: val=0;break;
