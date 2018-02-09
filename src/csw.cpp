@@ -176,24 +176,24 @@ void loop() {
         whStick(csw_in.axisX, csw_in.axisY);
 
         // All buttons
-        whButton(1, csw_in.buttons[0] & 0x80);
-        whButton(2, csw_in.buttons[0] & 0x40);
-        whButton(3, csw_in.buttons[0] & 0x20);
-        whButton(4, csw_in.buttons[0] & 0x10);
-        whButton(5, csw_in.buttons[1] & 0x80);
-        whButton(6, csw_in.buttons[1] & 0x40);
-        whButton(7, csw_in.buttons[1] & 0x20);
-        whButton(8, csw_in.buttons[1] & 0x10);
-        whButton(9, csw_in.buttons[1] & 0x04);
-        whButton(10, csw_in.buttons[1] & 0x02);
-        whButton(11, csw_in.buttons[2] & 0x08);
-        whButton(12, csw_in.buttons[2] & 0x04);
-        whButton(13, csw_in.buttons[2] & 0x02);
-        whButton(14, csw_in.buttons[2] & 0x20);
+        whButton(1, csw_in.buttons[0] & 0x80); // first top right
+        whButton(2, csw_in.buttons[0] & 0x40); // middle right
+        whButton(3, csw_in.buttons[0] & 0x20); // second top right
+        whButton(4, csw_in.buttons[0] & 0x10); // bottom right
+        whButton(5, csw_in.buttons[1] & 0x80); // third center
+        whButton(6, csw_in.buttons[1] & 0x40); // first center
+        whButton(7, csw_in.buttons[1] & 0x20); // middle left
+        whButton(8, csw_in.buttons[1] & 0x10); // first top left
+        whButton(9, csw_in.buttons[1] & 0x04); // bottom left
+        whButton(10, csw_in.buttons[1] & 0x02); // second top left
+        whButton(11, csw_in.buttons[2] & 0x08); // second center
+        whButton(12, csw_in.buttons[2] & 0x04); // stick button
+        whButton(13, csw_in.buttons[2] & 0x02); // hat button
+        whButton(14, csw_in.buttons[2] & 0x20); // display button
 
         // paddles shitfer
-        whButton(15, csw_in.buttons[1] & 0x08);
-        whButton(16, csw_in.buttons[1] & 0x01);
+        whButton(15, csw_in.buttons[1] & 0x08); // left
+        whButton(16, csw_in.buttons[1] & 0x01); // right
 
         if(csw_in.id == UNIHUB || csw_in.id == XBOXHUB){
           // Uni Hub extra buttons
@@ -229,8 +229,8 @@ void loop() {
 
         rotary_value = csw_in.encoder;
 
-        whButton(17, rotary_value == -1);
-        whButton(18, rotary_value == 1);
+        whButton(17, rotary_value == -1); // left
+        whButton(18, rotary_value == 1); // right
 
         whHat(csw_in.buttons[0] & 0x0f, false);
 
@@ -246,36 +246,35 @@ void loop() {
         csl_out.disp = csw7segToCsl(csw_out.disp[0]);
         transferCslData(&csl_out, &csl_in, sizeof(csl_out.raw), 0x41);
         whHat(csl_in.buttons & 0x1E, true);
-        whButton(6, csl_in.buttons & 0x01);
+        whButton(13, csl_in.buttons & 0x01); // hat button
 
         // Right Line / 2st disp
         csl_out.disp = csw7segToCsl(csw_out.disp[1]);
         transferCslData(&csl_out, &csl_in, sizeof(csl_out.raw), 0x02);
-        whButton(7, csl_in.buttons & 0x01);
-        whButton(8, csl_in.buttons & 0x04);
-        whButton(9, csl_in.buttons & 0x08);
-        whButton(10, csl_in.buttons & 0x10);
+        whButton(11, csl_in.buttons & 0x01); // wrench
+        whButton(5, csl_in.buttons & 0x04); // RT
+        whButton(14, csl_in.buttons & 0x08); // xbox
+        whButton(6, csl_in.buttons & 0x10); // RSB
 
         // Left cluster / 3st disp
         csl_out.disp = csw7segToCsl(csw_out.disp[2]);
         transferCslData(&csl_out, &csl_in, sizeof(csl_out.raw), 0x44);
-        whButton(1, csl_in.buttons & 0x01);
-        whButton(2, csl_in.buttons & 0x02);
-        whButton(3, csl_in.buttons & 0x04);
-        whButton(4, csl_in.buttons & 0x08);
-        whButton(5, csl_in.buttons & 0x10);
+        whButton(15, csl_in.buttons & 0x01); // left paddle
+        whButton(9, csl_in.buttons & 0x02); // lines
+        whButton(10, csl_in.buttons & 0x04); // squares
+        whButton(8, csl_in.buttons & 0x08); // LSB
+        whButton(7, csl_in.buttons & 0x10); // LT
 
         // Right cluster / RGB Led
         csl_out.disp = cswLedsToCsl(csw_out.leds);
         transferCslData(&csl_out, &csl_in, sizeof(csl_out.raw), 0x08);
-        whButton(11, csl_in.buttons & 0x01);
-        whButton(12, csl_in.buttons & 0x02);
-        whButton(13, csl_in.buttons & 0x04);
-        whButton(14, csl_in.buttons & 0x08);
-        whButton(15, csl_in.buttons & 0x10);
+        whButton(16, csl_in.buttons & 0x01); // right paddle
+        whButton(1, csl_in.buttons & 0x02); // B
+        whButton(2, csl_in.buttons & 0x04); // A
+        whButton(3, csl_in.buttons & 0x08); // Y
+        whButton(4, csl_in.buttons & 0x10); // X
 
         whStick(0, 0);
-
 
         break;
       default:
