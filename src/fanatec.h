@@ -32,6 +32,7 @@
 #define XBOXHUB 6
 #define CSLP1XBOX 7
 #define CSLP1PS4 8
+#define CSLMCLGT3 9
 
 enum wheel_type {
   NO_WHEEL,
