@@ -1,7 +1,7 @@
 TARGETPATH = firmware
 
 # The teensy version to use, 30, 31, or LC
-TEENSY = 31
+TEENSY = LC
 
 # Device type: USB (wired) or BT (bluetooth)
 TYPE = USB
@@ -14,7 +14,7 @@ TEENSY_CORE_SPEED = 24000000
 ARDUINO = 10600
 
 # configurable options
-OPTIONS = -DLAYOUT_US_ENGLISH
+OPTIONS = -DLAYOUT_US_ENGLISH -DHAS_DEBUG
 
 # directory to build in
 BUILDDIR = $(abspath $(CURDIR)/build)
