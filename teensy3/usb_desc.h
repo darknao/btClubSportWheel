@@ -115,19 +115,19 @@ let me know?  http://forum.pjrc.com/forums/4-Suggestions-amp-Bug-Reports
 #endif
 
 #ifdef HAS_DEBUG
-  #define VENDOR_ID   0x16C0
-  #define PRODUCT_ID    0x0487
-
-  #define SEREMU_NUM_EP       4
-  #define SEREMU_NUM_INT      2
+  #define VENDOR_ID             0x1209
+  #define PRODUCT_ID            0xdaa0
 
   #define DEVICE_CLASS    0xEF
   #define DEVICE_SUBCLASS 0x02
   #define DEVICE_PROTOCOL 0x01
 
+  #define CDC_NUM_EP       3
+  #define CDC_NUM_INT      2
+
   #define CDC_IAD_DESCRIPTOR  1
-  #define CDC_STATUS_INTERFACE  0
-  #define CDC_DATA_INTERFACE  1 // Serial
+  #define CDC_STATUS_INTERFACE  1
+  #define CDC_DATA_INTERFACE  2 // Serial
   #define CDC_ACM_ENDPOINT  2
   #define CDC_RX_ENDPOINT       3
   #define CDC_TX_ENDPOINT       4
@@ -138,12 +138,12 @@ let me know?  http://forum.pjrc.com/forums/4-Suggestions-amp-Bug-Reports
   #define VENDOR_ID             0x0eb7
   #define PRODUCT_ID            0x038e
 
-  #define SEREMU_NUM_EP       0
-  #define SEREMU_NUM_INT      0
+  #define CDC_NUM_EP       0
+  #define CDC_NUM_INT      0
 #endif
 
-  #define NUM_ENDPOINTS         JOYSTICK_NUM_EP + SEREMU_NUM_EP
-  #define NUM_INTERFACE         JOYSTICK_NUM_INT + SEREMU_NUM_INT
+  #define NUM_ENDPOINTS         JOYSTICK_NUM_EP + CDC_NUM_EP
+  #define NUM_INTERFACE         JOYSTICK_NUM_INT + CDC_NUM_INT
 
 
   #define ENDPOINT1_CONFIG  ENDPOINT_TRANSMIT_AND_RECEIVE

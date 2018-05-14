@@ -61,41 +61,66 @@ class usb_joystick_class
         void begin(void) { }
         void end(void) { }
         void button(uint8_t button, bool val) {
-            if (--button >= 48) return;
-            if (button >= 40) {
+            if (--button >= 88) return;
+            if (button >= 80) {
+                if (val) usb_joystick_data[10] |= (0x1 << (button-80));
+                else usb_joystick_data[10] &= ~(0x1 << (button-80));
+            } else if (button >= 72) {
+                if (val) usb_joystick_data[9] |= (0x1 << (button-72));
+                else usb_joystick_data[9] &= ~(0x1 << (button-72));
+            } else if (button >= 64) {
+                if (val) usb_joystick_data[8] |= (0x1 << (button-64));
+                else usb_joystick_data[8] &= ~(0x1 << (button-64));
+            } else if (button >= 56) {
+                if (val) usb_joystick_data[7] |= (0x1 << (button-56));
+                else usb_joystick_data[7] &= ~(0x1 << (button-56));
+            } else if (button >= 48) {
+                if (val) usb_joystick_data[6] |= (0x1 << (button-48));
+                else usb_joystick_data[6] &= ~(0x1 << (button-48));
+            } else if (button >= 40) {
                 if (val) usb_joystick_data[5] |= (0x1 << (button-40));
-                else usb_joystick_data[5] &= ~(0x1 << (button-40));     
+                else usb_joystick_data[5] &= ~(0x1 << (button-40));
             } else if (button >= 32) {
                 if (val) usb_joystick_data[4] |= (0x1 << (button-32));
-                else usb_joystick_data[4] &= ~(0x1 << (button-32));     
+                else usb_joystick_data[4] &= ~(0x1 << (button-32));
             } else if (button >= 24) {
                 if (val) usb_joystick_data[3] |= (0x1 << (button-24));
-                else usb_joystick_data[3] &= ~(0x1 << (button-24));     
+                else usb_joystick_data[3] &= ~(0x1 << (button-24));
             } else if (button >= 16) {
                 if (val) usb_joystick_data[2] |= (0x1 << (button-16));
-                else usb_joystick_data[2] &= ~(0x1 << (button-16));     
+                else usb_joystick_data[2] &= ~(0x1 << (button-16));
             } else if (button >= 8) {
                 if (val) usb_joystick_data[1] |= (0x1 << (button-8));
-                else usb_joystick_data[1] &= ~(0x1 << (button-8));          
+                else usb_joystick_data[1] &= ~(0x1 << (button-8));
             } else {
                 if (val) usb_joystick_data[0] |= (0x1 << (button));
-                else usb_joystick_data[0] &= ~(0x1 << (button));            
+                else usb_joystick_data[0] &= ~(0x1 << (button));
             }
             if (!manual_mode) usb_joystick_send();
         }
 
         void X(unsigned int val) {
-            usb_joystick_data[6] = val & 0xFF;
+            usb_joystick_data[11] = val & 0xFF;
             if (!manual_mode) usb_joystick_send();
         }
 
         void Y(unsigned int val) {
-            usb_joystick_data[7] = val & 0xFF;
+            usb_joystick_data[12] = val & 0xFF;
             if (!manual_mode) usb_joystick_send();
         }
-        
+
+        void clutch1(unsigned int val) {
+            usb_joystick_data[13] = val & 0xFF;
+            if (!manual_mode) usb_joystick_send();
+        }
+
+        void clutch2(unsigned int val) {
+            usb_joystick_data[14] = val & 0xFF;
+            if (!manual_mode) usb_joystick_send();
+        }
+
         inline void hat(int val) {
-            usb_joystick_data[8] = val & 0xFF;
+            usb_joystick_data[15] = val & 0xFF;
             if (!manual_mode) usb_joystick_send();
         }
 
