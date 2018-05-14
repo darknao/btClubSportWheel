@@ -37,7 +37,8 @@
 enum wheel_type {
   NO_WHEEL,
   CSW_WHEEL,
-  CSL_WHEEL
+  CSL_WHEEL,
+  MCL_WHEEL
 };
 
 #pragma pack(push, 1)
@@ -47,8 +48,8 @@ struct csw_in_t {
       uint8_t header;
       uint8_t id;
       uint8_t buttons[3];
-      int8_t axisX;
-      int8_t axisY;
+      uint8_t axisX;
+      uint8_t axisY;
       int8_t encoder;
       uint8_t btnHub[2];
       uint8_t btnPS[2];
@@ -56,7 +57,7 @@ struct csw_in_t {
       uint8_t garbage[20];
       uint8_t crc;
     };
-    uint8_t raw[34];
+    uint8_t raw[33];
   };
 };
 
@@ -96,6 +97,41 @@ struct csl_in_t {
     uint8_t raw[2];
   };
 };
+
+struct mcl_in_t {
+  union {
+    struct {
+      uint8_t header;
+      uint8_t id;
+      uint8_t buttons[3];
+      uint8_t axisX;
+      uint8_t axisY;
+      int8_t encoder;
+      uint8_t btnHub[2];
+      uint8_t btnPS[2];
+
+      uint8_t garbage[20];
+      uint8_t crc;
+    };
+    uint8_t raw[33];
+  };
+};
+
+struct mcl_out_t {
+  union {
+    struct {
+      uint8_t header;
+      uint8_t id;
+      uint8_t disp[3];
+      uint16_t leds;
+      uint8_t rumble[2];
+
+      uint8_t nothing[23];
+      uint8_t crc;
+    };
+    uint8_t raw[33];
+  };
+};
 #pragma pack(pop)
 
 wheel_type detectWheelType();
@@ -103,7 +139,10 @@ uint8_t getFirstByte();
 uint8_t crc8(const uint8_t* buf, uint8_t length);
 void transferCswData(csw_out_t* out, csw_in_t* in, uint8_t length);
 void transferCslData(csl_out_t* out, csl_in_t* in, uint8_t length, uint8_t selector);
+void transferMclData(mcl_out_t* out, mcl_in_t* in, uint8_t length);
 uint8_t csw7segToCsl(uint8_t csw_disp);
+uint8_t csw7segToAscii(uint8_t csw_disp);
+
 uint8_t cswLedsToCsl(uint16_t csw_leds);
 
 void fsetup();

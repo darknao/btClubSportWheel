@@ -85,8 +85,12 @@ wheel_type detectWheelType() {
     switch(getFirstByte()) {
       case 0x52: rim_inserted = CSW_WHEEL; break;
       case 0xE0: rim_inserted = CSL_WHEEL; break;
+      case 0xA5: rim_inserted = MCL_WHEEL; break;
       default: rim_inserted = NO_WHEEL; break;
     }
+      #ifdef HAS_DEBUG
+      Serial.println(String("Detected protocol: ") + rim_inserted);
+      #endif
   }
   return rim_inserted;
 }
@@ -106,8 +110,38 @@ uint8_t getFirstByte() {
       This loop make sure we reach the end of a transaction before starting a new one
       The CSL (P1) transaction size is only 1 byte, so it's not affected.
     */
-    for(int i=0; i<35; i++) {
-      SPI.transfer(0x00);
+    Serial.print("Firstbyte: ");
+    Serial.println(firstByte, HEX);
+    if(firstByte == 0x52){
+      Serial.println("csw: fast forward to next transaction");
+      for(int i=0; i<=31; i++) {
+        Serial.print(SPI.transfer(0x00),HEX);
+        Serial.print(":");
+      }
+      Serial.println();
+    } else if(firstByte != 0xE0 && firstByte != 0 ) {
+      // looks like we are in the middle of a transaction
+      #ifdef HAS_DEBUG
+      Serial.println("Realigning...");
+      #endif
+      uint8_t previousByte = 0;
+      uint8_t s;
+      for(int i=0; i<35; i++) {
+        s = SPI.transfer(0x00);
+        if(previousByte == 0xA5 && s == 0x09){
+          // Here we go
+          firstByte = previousByte;
+          #ifdef HAS_DEBUG
+          Serial.println("mcl: Fast Forward to next transaction");
+          #endif
+          for(int i=0; i<31; i++) {
+            SPI.transfer(0x00);
+          }
+          break;
+        } else {
+          previousByte = s;
+        }
+      }
     }
     digitalWrite(CS, HIGH);
     SPI.endTransaction();
@@ -168,6 +202,22 @@ void transferCslData(csl_out_t* out, csl_in_t* in, uint8_t length, uint8_t selec
   if (out->selector == 0x00 && in->raw[0] != 0xE0) rim_inserted = NO_WHEEL;
 }
 
+void transferMclData(mcl_out_t* out, mcl_in_t* in, uint8_t length) {
+  // get CRC
+  out->crc = crc8(out->raw, length-1);
+
+  // Send/Receive packet
+  SPI.beginTransaction(settingsA);
+  digitalWrite(CS, LOW);
+  for(int i=0; i<length; i++) {
+    in->raw[i] = SPI.transfer(out->raw[i]);
+  }
+  digitalWrite(CS, HIGH);
+  SPI.endTransaction();
+
+  if (in->header != 0xA5) rim_inserted = NO_WHEEL;
+}
+
 // Convert the CSW 7seg bits to CSL
 uint8_t csw7segToCsl(uint8_t csw_disp) {
   uint8_t csl_disp = 0x00;
@@ -200,6 +250,35 @@ uint8_t cswLedsToCsl(uint16_t csw_leds) {
 
   return csl_leds;
 }
+
+uint8_t csw7segToAscii(uint8_t csw_disp) {
+  uint8_t ascii;
+
+  switch(csw_disp) {
+    //case 0x40: ascii = 0x5B; break; // -
+    case 0x39: ascii = 0x28; break; // [
+    case 0x0F: ascii = 0x29; break; // ]
+    case 0x3F: ascii = 0x00; break; // 0
+    case 0x06: ascii = 0x01; break; // 1
+    case 0x5B: ascii = 0x02; break; // 2
+    case 0x4F: ascii = 0x03; break; // 3
+    case 0x66: ascii = 0x04; break; // 4
+    case 0x6D: ascii = 0x05; break; // 5
+    case 0x7D: ascii = 0x06; break; // 6
+    case 0x07: ascii = 0x07; break; // 6
+    case 0x7F: ascii = 0x08; break; // 8
+    case 0x6F: ascii = 0x09; break; // 9
+
+    case 0x54: ascii = 0x4E; break; // N
+    case 0x50: ascii = 0x52; break; // R
+
+    default:
+      ascii = 0x0A;
+  }
+
+  return ascii;
+}
+
 
 void fsetup() {
 
