@@ -83,7 +83,6 @@ If these instructions are missing steps or could be improved, please
 let me know?  http://forum.pjrc.com/forums/4-Suggestions-amp-Bug-Reports
 */
 
-
   #define MANUFACTURER_NAME     {'d','a','r','k','n','a', 'o'}
   #define MANUFACTURER_NAME_LEN 7
   #define PRODUCT_NAME          {'C', 'l', 'u', 'b', 'S', 'p', 'o', 'r', 't', ' ', 'W', 'h', 'e' ,'e', 'l'}
@@ -98,7 +97,7 @@ let me know?  http://forum.pjrc.com/forums/4-Suggestions-amp-Bug-Reports
   #define JOYSTICK_INTERFACE    0
   #define JOYSTICK_ENDPOINT     1
   #define JOYSTICK_SIZE         32
-  #define JOYSTICK_INTERVAL     2
+  #define JOYSTICK_INTERVAL     5
   #define LIGHTS_ENDPOINT       1
   #define LIGHTS_SIZE           8
   #define LIGHTS_INTERVAL       16

@@ -54,7 +54,8 @@ struct csw_in_t {
       uint8_t btnHub[2];
       uint8_t btnPS[2];
 
-      uint8_t garbage[20];
+      uint8_t garbage[19];
+      uint8_t fwvers;
       uint8_t crc;
     };
     uint8_t raw[33];
@@ -110,7 +111,8 @@ struct mcl_in_t {
       uint8_t btnHub[2];
       uint8_t btnPS[2];
 
-      uint8_t garbage[20];
+      uint8_t garbage[19];
+      uint8_t fwvers;
       uint8_t crc;
     };
     uint8_t raw[33];

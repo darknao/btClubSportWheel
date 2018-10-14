@@ -30,6 +30,8 @@
 #define WT12 Serial1
 #define CTS 18
 
+#define MAX_SPEED   5000
+
 uint8_t iwrap_mode = IWRAP_MODE_MUX;
 
 uint8_t hid_data[35];
@@ -51,6 +53,7 @@ void hid_output(uint8_t link_id, uint16_t data_length, const uint8_t *data);
 void setup();
 void loop();
 void idle();
+void init_wheel();
 
 /* Wheel inputs */
 void whClear();
@@ -72,8 +75,11 @@ mcl_out_t mcl_out;
 
 bool bt_connected;
 bool got_hid;
+bool show_fwvers;
 uint32_t timing;
 uint32_t timing_bt;
+uint32_t disp_timout;
+uint32_t usb_time;
 
 uint8_t hid_pck[7];
 
@@ -105,6 +111,7 @@ void setup() {
   // debounce timer for rotary encoder
   btDebncer[17].interval(30);
   btDebncer[18].interval(30);
+
 
   /* WT12 */
   #ifndef IS_USB
@@ -146,7 +153,13 @@ void setup() {
     // iwrap_debug = my_iwrap_debug;
     Serial.begin(115200);
     Serial.println("MCU Ready");
-    delay(5000);
+    for (int i = 0; i < 100; ++i)
+    {
+      delay(100);
+      Serial.print(".");
+      /* code */
+    }
+
     Serial.println("check for active connection...");
   #endif
 
@@ -159,6 +172,7 @@ void setup() {
   // iwrap_send_command("SET BT PAIR", iwrap_mode);
   timing = micros();
   timing_bt = millis();
+  usb_time = micros();
 }
 
 
@@ -178,7 +192,20 @@ void loop() {
       case CSW_WHEEL:
         // csw stuff
         // Read Fanatec Packet
+
+        //csw_out.raw[9] = 0x0F; // xbox light
         transferCswData(&csw_out, &csw_in, sizeof(csw_out.raw));
+        init_wheel();
+
+        #ifdef HAS_DEBUG
+           Serial.print("CSW_IN:");
+           for(int i=0; i<sizeof(csw_in.raw); i++) {
+
+              Serial.print(csw_in.raw[i], HEX);
+              Serial.print(":");
+            }
+            Serial.println();
+        #endif
 
         // Wheel ID
         whSetId(csw_in.id);
@@ -194,17 +221,29 @@ void loop() {
         whButton(5, csw_in.buttons[1] & 0x80); // third center
         whButton(6, csw_in.buttons[1] & 0x40); // first center
         whButton(7, csw_in.buttons[1] & 0x20); // middle left
-        whButton(8, csw_in.buttons[1] & 0x10); // first top left
         whButton(9, csw_in.buttons[1] & 0x04); // bottom left
-        whButton(10, csw_in.buttons[1] & 0x02); // second top left
         whButton(11, csw_in.buttons[2] & 0x08); // second center
         whButton(12, csw_in.buttons[2] & 0x04); // stick button
-        whButton(13, csw_in.buttons[2] & 0x02); // hat button
-        whButton(14, csw_in.buttons[2] & 0x20); // display button
 
         // paddles shitfer
         whButton(15, csw_in.buttons[1] & 0x08); // left
         whButton(16, csw_in.buttons[1] & 0x01); // right
+
+        rotary_value = csw_in.encoder;
+
+        if(csw_in.id != CSLMCLGT3){
+          whButton(8, csw_in.buttons[1] & 0x10); // first top left
+          whButton(10, csw_in.buttons[1] & 0x02); // second top left
+          whButton(13, csw_in.buttons[2] & 0x02); // hat button
+          whButton(14, csw_in.buttons[2] & 0x20); // display button
+
+
+
+          whButton(17, rotary_value == -1); // left
+          whButton(18, rotary_value == 1); // right
+
+        }
+
 
         if(csw_in.id == UNIHUB || csw_in.id == XBOXHUB){
           // Uni Hub extra buttons
@@ -238,20 +277,123 @@ void loop() {
           whButton(38, csw_in.btnHub[1] & 0x08);
         }
 
-        rotary_value = csw_in.encoder;
-
-        whButton(17, rotary_value == -1); // left
-        whButton(18, rotary_value == 1); // right
 
         whHat(csw_in.buttons[0] & 0x0f, false);
 
         // Serial.println(String("button: ") + hid_data[3]);
+
+
+        if(csw_in.id == CSLMCLGT3){
+        whButton(8, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x10)); // switch left up
+        whButton(19, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x10)); // switch left down
+        whButton(10, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x10)); // switch right up
+        whButton(20, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x10)); // switch right down
+
+        whButton(33, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x20)); // switch left up
+        whButton(34, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x20)); // switch left down
+        whButton(35, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x20)); // switch right up
+        whButton(36, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x20)); // switch right down
+
+        whButton(37, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x30)); // switch left up
+        whButton(38, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x30)); // switch left down
+        whButton(39, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x30)); // switch right up
+        whButton(40, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x30)); // switch right down
+
+        whButton(41, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x40)); // switch left up
+        whButton(42, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x40)); // switch left down
+        whButton(43, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x40)); // switch right up
+        whButton(44, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x40)); // switch right down
+
+        whButton(45, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x50)); // switch left up
+        whButton(46, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x50)); // switch left down
+        whButton(47, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x50)); // switch right up
+        whButton(48, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x50)); // switch right down
+
+        whButton(49, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x60)); // switch left up
+        whButton(50, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x60)); // switch left down
+        whButton(51, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x60)); // switch right up
+        whButton(52, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x60)); // switch right down
+
+        whButton(53, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x70)); // switch left up
+        whButton(54, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x70)); // switch left down
+        whButton(55, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x70)); // switch right up
+        whButton(56, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x70)); // switch right down
+
+        whButton(57, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x80)); // switch left up
+        whButton(58, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x80)); // switch left down
+        whButton(59, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x80)); // switch right up
+        whButton(60, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x80)); // switch right down
+
+        whButton(61, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0x90)); // switch left up
+        whButton(62, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0x90)); // switch left down
+        whButton(63, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0x90)); // switch right up
+        whButton(64, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0x90)); // switch right down
+
+        whButton(65, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0xA0)); // switch left up
+        whButton(66, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0xA0)); // switch left down
+        whButton(67, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0xA0)); // switch right up
+        whButton(68, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0xA0)); // switch right down
+
+        whButton(69, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0xB0)); // switch left up
+        whButton(70, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0xB0)); // switch left down
+        whButton(71, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0xB0)); // switch right up
+        whButton(72, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0xB0)); // switch right down
+
+        whButton(73, (csw_in.buttons[1] & 0x10) && ((csw_in.garbage[3] & 0xF0) == 0xC0)); // switch left up
+        whButton(74, (csw_in.buttons[2] & 0x80) && ((csw_in.garbage[3] & 0xF0) == 0xC0)); // switch left down
+        whButton(75, (csw_in.buttons[1] & 0x02) && ((csw_in.garbage[3] & 0xF0) == 0xC0)); // switch right up
+        whButton(76, (csw_in.buttons[2] & 0x40) && ((csw_in.garbage[3] & 0xF0) == 0xC0)); // switch right down
+
+        whButton(14, csw_in.buttons[2] & 0x02); // xbox
+
+        if ((csw_in.garbage[2] & 0x0F) == 0x02 && !csw_in.axisX) // left clutch fully pressed
+        {
+          clutch_max = constrain(clutch_max + rotary_value, 0, 0xFF);
+        } else {
+          whButton(17, rotary_value <= -1); // left
+          whButton(18, rotary_value >= 1); // right
+        }
+
+        // clutch paddle
+        switch(csw_in.garbage[2] & 0x0F) {
+          case 0x01:
+            // bite point
+            whDoubleClutch(~csw_in.axisX, ~csw_in.axisY);
+            break;
+          case 0x02:
+            // bite point advanced
+            whDoubleClutch(map(~csw_in.axisX & 0xFF,0,0xFF,0,clutch_max) , ~csw_in.axisY&0xff);
+            break;
+          default:
+          whDoubleAxis(~csw_in.axisX, ~csw_in.axisY);
+        }
+
+        //whButton(11, mcl_in.buttons[2] & 0x20); // display button
+
+          whButton(21, ((csw_in.garbage[3] & 0x0f) == 0x01) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(22, ((csw_in.garbage[3] & 0x0f) == 0x02) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(23, ((csw_in.garbage[3] & 0x0f) == 0x03) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(24, ((csw_in.garbage[3] & 0x0f) == 0x04) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(25, ((csw_in.garbage[3] & 0x0f) == 0x05) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(26, ((csw_in.garbage[3] & 0x0f) == 0x06) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(27, ((csw_in.garbage[3] & 0x0f) == 0x07) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(28, ((csw_in.garbage[3] & 0x0f) == 0x08) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(29, ((csw_in.garbage[3] & 0x0f) == 0x09) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(30, ((csw_in.garbage[3] & 0x0f) == 0x0A) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(31, ((csw_in.garbage[3] & 0x0f) == 0x0B) && !((csw_in.buttons[2] & 0x20) == 0x20));
+          whButton(32, ((csw_in.garbage[3] & 0x0f) == 0x0C) && !((csw_in.buttons[2] & 0x20) == 0x20));
+
+
+          whStick(0, 0);
+        }
+
 
         break;
       case CSL_WHEEL:
         // csl stuff
         transferCslData(&csl_out, &csl_in, sizeof(csl_out.raw), 0x00);
         whSetId(CSLP1XBOX);
+        init_wheel();
 
         // Joystick / 1st disp
         csl_out.disp = csw7segToCsl(csw_out.disp[0]);
@@ -291,9 +433,8 @@ void loop() {
       case MCL_WHEEL:
         // McLaren GT3
 
-        // xbox light
-        mcl_out.raw[9] = 0x0F;
         transferMclData(&mcl_out, &mcl_in, sizeof(mcl_out.raw));
+        init_wheel();
 
         // Wheel ID
         whSetId(mcl_in.id);
@@ -449,7 +590,27 @@ void loop() {
 
     // Send HID report (all inputs)
     #ifdef IS_USB
+      uint32_t now = micros();
+      if (now >= usb_time)
+      {
+        uint32_t delta_t = now - usb_time;
+        #ifdef HAS_DEBUG
+          Serial.println(String("usb loop time : ") + delta_t);
+        #endif
+
+        if (delta_t <= MAX_SPEED)
+        {
+          delayMicroseconds(MAX_SPEED - delta_t);
+        }
+      }
+      #ifdef HAS_DEBUG
+          Serial.println(String("usb loop time pre send: ") + (micros() - usb_time));
+      #endif
       Joystick.send_now();
+      #ifdef HAS_DEBUG
+          Serial.println(String("usb loop time post send: ") + (micros() - usb_time));
+      #endif
+      usb_time = micros();
       // rotary_debounce = 0;
     #else
       uint32_t timout;
@@ -608,6 +769,7 @@ void whDoubleClutch(unsigned int x, unsigned int y) {
 
   #ifdef IS_USB
     Joystick.clutch1(x);
+    Joystick.clutch2(0);
   #else
     uint8_t old = hid_data[9];
     hid_data[9] = x & 0xFF;
@@ -673,12 +835,14 @@ void whClear(){
   whSetId(NO_RIM);
   whStick(0, 0);
   whHat(0, false);
-  whDoubleAxis(0, 0);
+  whDoubleAxis(0x00, 0x00);
   for (int i = 1; i <= 37; ++i)
   {
     whButton(i, 0);
   }
   clutch_max = 0xFF;
+  show_fwvers = true;
+  disp_timout = 0;
 }
 
 int iwrap_out(int len, unsigned char *data) {
@@ -700,29 +864,40 @@ int iwrap_out(int len, unsigned char *data) {
 }
 
 void hid_output(uint8_t link_id, uint16_t data_length, const uint8_t *data) {
-  #ifdef HAS_DEBUG
-  timing_bt = millis() - timing_bt;
-  if(timing_bt <= 35){
-    Serial.println(String("[W] low timing :") + timing_bt + "ms ");
-    // delay(10+(35-timing_bt));
-  }
-  #endif
-
   if(data[2] == 0x01 && data[3] == 0x02){
       // 7 seg
+    if(!show_fwvers){
       if (detectWheelType() == MCL_WHEEL) {
         mcl_out.raw[1] = 0x11;
         mcl_out.raw[2] = csw7segToAscii(data[4] & 0xff);
         mcl_out.raw[3] = csw7segToAscii(data[5] & 0xff);
         mcl_out.raw[4] = csw7segToAscii(data[6] & 0xff);
+
+      #ifdef HAS_DEBUG
+        Serial.print(String("HID display: " ));
+        Serial.print(data[4], HEX);
+        Serial.print(":");
+        Serial.print(data[5], HEX);
+        Serial.print(":");
+        Serial.print(data[6], HEX);
+        Serial.println();
+      #endif
       } else {
-        csw_out.disp[0] = (data[4] & 0xff);
-        csw_out.disp[1] = (data[5] & 0xff);
-        csw_out.disp[2] = (data[6] & 0xff);
+        if(csw_in.id == CSLMCLGT3){
+          csw_out.raw[1] = 0x11;
+          csw_out.raw[2] = csw7segToAscii(data[4] & 0xff);
+          csw_out.raw[3] = csw7segToAscii(data[5] & 0xff);
+          csw_out.raw[4] = csw7segToAscii(data[6] & 0xff);
+        } else {
+          csw_out.disp[0] = (data[4] & 0xff);
+          csw_out.disp[1] = (data[5] & 0xff);
+          csw_out.disp[2] = (data[6] & 0xff);
+        }
       #ifdef HAS_DEBUG
         Serial.println(String("HID display: " )+ csw_out.disp[0]+":"+csw_out.disp[1]+":"+csw_out.disp[2]);
       #endif
       }
+    }
   } else if(data[2] == 0x01 && data[3] == 0x03){
       // rumbles
     if (csw_out.id != UNIHUB && csw_in.id != CSLMCLGT3){
@@ -742,7 +917,11 @@ void hid_output(uint8_t link_id, uint16_t data_length, const uint8_t *data) {
       #ifdef HAS_DEBUG
         Serial.println(String("HID leds   : " )+ csw_out.leds);
       #endif
+  } else if(data[1] == 0x14){
+      // ??
+
   } else {
+
       #ifdef HAS_DEBUG
         Serial.print(String("[!] HID Unknown from " )+ link_id + " (size:" + data_length + ") : ");
 
@@ -753,9 +932,75 @@ void hid_output(uint8_t link_id, uint16_t data_length, const uint8_t *data) {
         }
         Serial.println();
       #endif
+
   }
   timing_bt = millis();
 }
+
+
+void init_wheel() {
+  if(show_fwvers){
+
+    if (disp_timout == 0){
+      // start showing fw vers
+      if (detectWheelType() == MCL_WHEEL) {
+        String fw_vers = String(mcl_in.fwvers);
+        mcl_out.raw[1] = 0x11;
+        // Erase all
+        mcl_out.raw[2] = 0x0A;
+        mcl_out.raw[3] = 0x0A;
+        mcl_out.raw[4] = 0x0A;
+        //
+        mcl_out.raw[2] = fw_vers.charAt(0);
+        if(fw_vers.length()>1)
+          mcl_out.raw[3] = fw_vers.charAt(1);
+        if(fw_vers.length()>2)
+          mcl_out.raw[4] = fw_vers.charAt(2);
+      } else {
+        String fw_vers = String(csw_in.fwvers);
+        if(csw_in.id == CSLMCLGT3){
+          csw_out.raw[1] = 0x11;
+          // Erase all
+          csw_out.raw[2] = 0x0A;
+          csw_out.raw[3] = 0x0A;
+          csw_out.raw[4] = 0x0A;
+          //
+          csw_out.raw[2] = fw_vers.charAt(0);
+          if(fw_vers.length()>1)
+            csw_out.raw[3] = fw_vers.charAt(1);
+          if(fw_vers.length()>2)
+            csw_out.raw[4] = fw_vers.charAt(2);
+        } else {
+          // TODO: AsciiTo7seg conversion
+          csw_out.disp[0] = 0x00;
+          csw_out.disp[1] = 0x00;
+          csw_out.disp[2] = 0x00;
+        }
+      }
+      disp_timout = millis();
+    } else if(millis() - disp_timout >= 4000) {
+      // stop
+      show_fwvers = false;
+      mcl_out.raw[1] = 0x11;
+      mcl_out.raw[2] = 0x0A;
+      mcl_out.raw[3] = 0x0A;
+      mcl_out.raw[4] = 0x0A;
+      mcl_out.raw[9] = 0x00;
+      if(csw_in.id == CSLMCLGT3){
+        csw_out.raw[1] = 0x11;
+        csw_out.raw[2] = 0x0A;
+        csw_out.raw[3] = 0x0A;
+        csw_out.raw[4] = 0x0A;
+      }
+    }
+  } else {
+      // xbox light
+  //    mcl_out.raw[1] = 0x00;
+  //    mcl_out.raw[9] = 0x0F;
+  }
+
+}
+
 
 #ifdef HAS_DEBUG
 int my_iwrap_debug(const char *data) {
