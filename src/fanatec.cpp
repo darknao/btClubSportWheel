@@ -23,6 +23,7 @@
 // SPI setting to communicate with Fanatec PCB.
 // Basically default setting, except speed is set to 12Mhz
 SPISettings settingsA(12000000, MSBFIRST, SPI_MODE0);
+SPISettings settingsB(12000000, MSBFIRST, SPI_MODE1);
 
 // Conversion table for CSW 7segs to CSL
 uint8_t csw2csl_disp[8] = {6, 4, 0, 2, 5, 7, 1, 3};
@@ -81,9 +82,10 @@ uint8_t crc8(const uint8_t* buf, uint8_t length) {
 // Try to detect which wheel is connected by reading the header bit
 // transfer*Data also reset this state if the header bit is not the one expected
 wheel_type detectWheelType() {
-  if(!rim_inserted) {
+  if(rim_inserted == NO_WHEEL) {
     switch(getFirstByte()) {
-      case 0x52: rim_inserted = CSW_WHEEL; break;
+      case 0x52:
+      case 0xD2: rim_inserted = CSW_WHEEL; break;
       case 0xE0: rim_inserted = CSL_WHEEL; break;
       case 0xA5: rim_inserted = MCL_WHEEL; break;
       default: rim_inserted = NO_WHEEL; break;
@@ -98,6 +100,7 @@ wheel_type detectWheelType() {
 // Fetch first byte from SPI transaction for protocol detection
 uint8_t getFirstByte() {
   uint8_t firstByte;
+  uint8_t buf;
   // Send packet, twice (see transferCslData)
   for (int z=0; z<2; z++) {
     SPI.beginTransaction(settingsA);
@@ -110,15 +113,42 @@ uint8_t getFirstByte() {
       This loop make sure we reach the end of a transaction before starting a new one
       The CSL (P1) transaction size is only 1 byte, so it's not affected.
     */
-    Serial.print("Firstbyte: ");
-    Serial.println(firstByte, HEX);
-    if(firstByte == 0x52){
-      Serial.println("csw: fast forward to next transaction");
+
+    #ifdef HAS_DEBUG
+      Serial.print("Firstbyte: ");
+      Serial.println(firstByte, HEX);
+    #endif
+    if(firstByte  == 0x52){
+      #ifdef HAS_DEBUG
+        Serial.println("csw: fast forward to next transaction");
+      #endif
       for(int i=0; i<=31; i++) {
-        Serial.print(SPI.transfer(0x00),HEX);
-        Serial.print(":");
+        buf = SPI.transfer(0x00);
+        #ifdef HAS_DEBUG
+          Serial.print(buf, HEX);
+          Serial.print(":");
+        #endif
       }
-      Serial.println();
+      #ifdef HAS_DEBUG
+        Serial.println();
+      #endif
+    } else if(firstByte == 0xD2){
+      // 0x52 with extra byte from previous crc (wrong communication settings)
+      // so we need to flush this extra byte befor going forward
+      #ifdef HAS_DEBUG
+        Serial.println("csw: flushing buffer & fast forward to next transaction");
+      #endif
+      for(int i=0; i<=(31*2); i++) {
+        buf = SPI.transfer(0x00);
+        #ifdef HAS_DEBUG
+          Serial.print(buf, HEX);
+          Serial.print(":");
+        #endif
+      }
+      #ifdef HAS_DEBUG
+        Serial.println();
+      #endif
+
     } else if(firstByte != 0xE0 && firstByte != 0 ) {
       // looks like we are in the middle of a transaction
       #ifdef HAS_DEBUG
@@ -128,15 +158,26 @@ uint8_t getFirstByte() {
       uint8_t s;
       for(int i=0; i<35; i++) {
         s = SPI.transfer(0x00);
-        if(previousByte == 0xA5 && s == 0x09){
+        #ifdef HAS_DEBUG
+          Serial.print("searching: next byte: ");
+          Serial.println(s, HEX);
+        #endif
+        if( (previousByte == 0xA5 && s == 0x09) || (previousByte == 0x52 && s == 0x84) ){
           // Here we go
           firstByte = previousByte;
           #ifdef HAS_DEBUG
           Serial.println("mcl: Fast Forward to next transaction");
           #endif
           for(int i=0; i<31; i++) {
-            SPI.transfer(0x00);
+            buf = SPI.transfer(0x00);
+            #ifdef HAS_DEBUG
+              Serial.print(buf, HEX);
+              Serial.print(":");
+            #endif
           }
+          #ifdef HAS_DEBUG
+            Serial.println();
+          #endif
           break;
         } else {
           previousByte = s;
@@ -149,6 +190,7 @@ uint8_t getFirstByte() {
     // wait for CS to settle a little
     delayMicroseconds(10);
   }
+  delay(10);
   return firstByte;
 }
 
@@ -174,10 +216,35 @@ void transferCswData(csw_out_t* out, csw_in_t* in, uint8_t length) {
     This bit is discarded here, and everything is shifted
     to realligned the data correctly with the csw_in_t struct.
   */
+  /*
   for (int i = 0;  i < length - 1;  ++i) {
      in->raw[i] = (in->raw[i] << 1) | ((in->raw[i+1] >> 7) & 1);
   }
-  if (in->header != 0xa5) rim_inserted = NO_WHEEL;
+  */
+  if (in->header == 0xd2 || in->header == 0x52){
+    // data still not alligned (?!)
+    #ifdef HAS_DEBUG
+    Serial.print("csw: data not alligned :");
+    Serial.println(in->header, HEX);
+    #endif
+    for (int i = 0;  i < length - 1;  ++i) {
+       in->raw[i] = (in->raw[i] << 1) | ((in->raw[i+1] >> 7) & 1);
+    }
+    in->raw[length - 1] = (in->raw[length - 1] << 1);
+  }
+
+  #ifdef HAS_DEBUG
+  uint8_t crc = crc8(in->raw, length-1);
+  if((crc&0xFE) != in->crc){
+    Serial.print("Bad CRC: ");
+    Serial.print(in->crc, HEX);
+    Serial.print(" != ");
+    Serial.println(crc, HEX);
+  }
+  #endif
+
+  if ((in->header & 0xFE) != 0xa4) rim_inserted = NO_WHEEL;
+  //if ((in->header == 0x00) || (in->header == 0xFF)) rim_inserted = NO_WHEEL;
 }
 
 // CSL I/O
@@ -215,7 +282,18 @@ void transferMclData(mcl_out_t* out, mcl_in_t* in, uint8_t length) {
   digitalWrite(CS, HIGH);
   SPI.endTransaction();
 
+  #ifdef HAS_DEBUG
+  uint8_t crc = crc8(in->raw, length-1);
+  if(crc != in->crc){
+    Serial.print("Bad CRC: ");
+    Serial.print(in->crc, HEX);
+    Serial.print(" != ");
+    Serial.println(crc, HEX);
+  }
+  #endif
   if (in->header != 0xA5) rim_inserted = NO_WHEEL;
+  //if ((in->header == 0x00) || (in->header == 0xFF)) rim_inserted = NO_WHEEL;
+
 }
 
 // Convert the CSW 7seg bits to CSL
