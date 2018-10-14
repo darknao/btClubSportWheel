@@ -598,19 +598,27 @@ void loop() {
           Serial.println(String("usb loop time : ") + delta_t);
         #endif
 
-        if (delta_t <= MAX_SPEED)
+        if (delta_t >= MAX_SPEED)
         {
-          delayMicroseconds(MAX_SPEED - delta_t);
+          // delayMicroseconds(MAX_SPEED - delta_t);
+          #ifdef HAS_DEBUG
+              Serial.println(String("usb loop time pre send: ") + (micros() - usb_time));
+          #endif
+          Joystick.send_now();
+          #ifdef HAS_DEBUG
+              Serial.println(String("usb loop time post send: ") + (micros() - usb_time));
+          #endif
+          usb_time = micros();
+        }
+        else {
+          #ifdef HAS_DEBUG
+              Serial.println(String("skipping report"));
+          #endif
         }
       }
-      #ifdef HAS_DEBUG
-          Serial.println(String("usb loop time pre send: ") + (micros() - usb_time));
-      #endif
-      Joystick.send_now();
-      #ifdef HAS_DEBUG
-          Serial.println(String("usb loop time post send: ") + (micros() - usb_time));
-      #endif
-      usb_time = micros();
+
+
+
       // rotary_debounce = 0;
     #else
       uint32_t timout;
