@@ -89,7 +89,8 @@ Debouncer hatDebncer = Debouncer();
 byte rotary_debounce = 0;
 int8_t rotary_value = 0;
 uint8_t main_link_id = 1;
-
+uint8_t left_paddle = 0;
+uint8_t right_paddle = 0;
 uint8_t clutch_max = 0xFF;
 
 void setup()
@@ -227,8 +228,18 @@ void loop()
       whButton(12, csw_in.buttons[2] & 0x04); // stick button
 
       // paddles shitfer
-      whButton(15, csw_in.buttons[1] & 0x08); // left
-      whButton(16, csw_in.buttons[1] & 0x01); // right
+
+      left_paddle = csw_in.buttons[1] & 0x08;
+      right_paddle = csw_in.buttons[1] & 0x01;
+
+      if (csw_in.id == XBOXHUB)
+      {
+        left_paddle |= csw_in.garbage[0] & 0x02;
+        right_paddle |= csw_in.garbage[0] & 0x08;
+      }
+
+      whButton(15, left_paddle); // left
+      whButton(16, right_paddle); // right
 
       rotary_value = csw_in.encoder;
 
@@ -269,12 +280,20 @@ void loop()
         whButton(35, csw_in.btnPS[1] & 0x20);
         whButton(36, csw_in.btnPS[1] & 0x40);
         whButton(37, csw_in.btnPS[1] & 0x80);
+
       }
 
       if (csw_in.id == XBOXHUB)
       {
         // Xbox Hub has 1 extra button
         whButton(38, csw_in.btnHub[1] & 0x08);
+
+        //APM
+        whButton(39, csw_in.garbage[0] & 0x01);
+        // whButton(40, csw_in.garbage[0] & 0x02);
+        whButton(41, csw_in.garbage[0] & 0x04);
+        // whButton(42, csw_in.garbage[0] & 0x08);
+        whDoubleAxis(csw_in.garbage[1], csw_in.garbage[2]);
       }
 
       whHat(csw_in.buttons[0] & 0x0f, false);
